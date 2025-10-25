@@ -26,7 +26,7 @@ class UrlGenerator extends BaseUrlGenerator
 
         // If the default locale is hidden and both the URL and app locales match the default,
         // skip adding the locale to the URL. Otherwise, include it to update the app locale.
-        if ($hideDefault && $urlLocale === $defaultLocale && $appLocale === $defaultLocale) {
+        if ($hideDefault && ($urlLocale === $defaultLocale || $urlLocale === null) && $appLocale === $defaultLocale) {
             $withoutLocaleName = 'without_locale.' . $name;
             if (Route::has($withoutLocaleName)) {
                 // Need to unset locale here, otherwise it will

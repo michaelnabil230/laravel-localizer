@@ -102,6 +102,30 @@ class UrlGeneratorTest extends TestCase
     }
 
     /** @test */
+    public function it_works_for_route_without_locale_without_parameters()
+    {
+        // Laravel’s default locale (from config/app.php)
+        config()->set('app.locale', 'en');
+        app()->setLocale('en');
+
+        // Package config: simulate locale-routing.php values
+        config()->set('locale-routing.supported_locales', ['en', 'de']);
+        config()->set('locale-routing.hide_default_locale', true);
+
+        Route::get('/{locale}/about', fn () => 'ok')->name('with_locale.about');
+        Route::get('/about', fn () => 'ok')->name('without_locale.about');
+
+        /** @var \NielsNumbers\LocaleRouting\Illuminate\Routing\UrlGenerator $url */
+        $url = app('url');
+        $this->assertInstanceOf(CustomUrlGenerator::class, $url);
+
+        // Because your route() method doesn’t return yet, we just check that it’s called
+        $route = $url->route('about', [], false);
+
+        $this->assertEquals('/about', $route);
+    }
+
+    /** @test */
     public function it_works_for_switch_to_route_without_locale()
     {
         app()->setLocale('de');
