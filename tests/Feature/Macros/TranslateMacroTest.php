@@ -35,8 +35,8 @@ class TranslateMacroTest extends TestCase
 
         $routes = collect(Route::getRoutes())->pluck('action.as');
 
-        $this->assertTrue($routes->contains('en.about'));
-        $this->assertTrue($routes->contains('de.about'));
+        $this->assertTrue($routes->contains('translated_en.about'));
+        $this->assertTrue($routes->contains('translated_de.about'));
         $this->assertTrue($routes->contains('without_locale.about'));
     }
 
