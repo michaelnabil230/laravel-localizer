@@ -14,16 +14,19 @@ class UrlGenerator extends BaseUrlGenerator
     public function route($name, $parameters = [], $absolute = true)
     {
         $urlLocale = $parameters['locale'] ?? null;
+        $appLocale = App::getLocale();
+        $locale = $urlLocale ?? $appLocale;
 
         if (Route::has($name)) {
             return parent::route($name, $parameters, $absolute);
         }
 
-        $defaultLocale = config('app.locale');
+        $defaultLocale = config('app.fallback_locale');
         $hideDefault = Localizer::hideDefaultLocale();
 
-        // If locale is default and hide_default_locale is true → use route without locale prefix
-        if ($hideDefault && $urlLocale === $defaultLocale) {
+        // If the default locale is hidden and both the URL and app locales match the default,
+        // skip adding the locale to the URL. Otherwise, include it to update the app locale.
+        if ($hideDefault && $urlLocale === $defaultLocale && $appLocale === $defaultLocale) {
             $withoutLocaleName = 'without_locale.' . $name;
             if (Route::has($withoutLocaleName)) {
                 // Need to unset locale here, otherwise it will
@@ -34,7 +37,12 @@ class UrlGenerator extends BaseUrlGenerator
         }
 
 
+        // Check for localized route, locale is part of the url as parameter {localize}
         $resolvedName = 'with_locale.' .  $name;
+        if (Route::has($resolvedName)) {
+            $parameters['locale'] = $locale;
+            return parent::route($resolvedName, $parameters, $absolute);
+        }
 
         return parent::route($resolvedName, $parameters, $absolute);
     }

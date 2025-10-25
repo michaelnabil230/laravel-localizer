@@ -100,4 +100,46 @@ class UrlGeneratorTest extends TestCase
 
         $this->assertEquals('/about', $route);
     }
+
+    /** @test */
+    public function it_works_for_switch_to_route_without_locale()
+    {
+        app()->setLocale('de');
+
+        config()->set('locale-routing.supported_locales', ['en', 'de']);
+        config()->set('locale-routing.hide_default_locale', true);
+
+        Route::get('/{locale}/about', fn () => 'ok')->name('with_locale.about');
+        Route::get('/about', fn () => 'ok')->name('without_locale.about');
+
+        /** @var \NielsNumbers\LocaleRouting\Illuminate\Routing\UrlGenerator $url */
+        $url = app('url');
+        $this->assertInstanceOf(CustomUrlGenerator::class, $url);
+
+        $route = $url->route('about', ['locale' => 'en'], false);
+
+        // Set locale is set to `de`, thus we need to call `/en/about` to request
+        // locale change, otherwise it would redirect to de
+        $this->assertEquals('/en/about', $route);
+    }
+
+    /** @test */
+    public function it_autoloads_locale_into_route()
+    {
+        app()->setLocale('de');
+
+        config()->set('locale-routing.supported_locales', ['en', 'de']);
+        config()->set('locale-routing.hide_default_locale', true);
+
+        Route::get('/{locale}/about', fn () => 'ok')->name('with_locale.about');
+        Route::get('/about', fn () => 'ok')->name('without_locale.about');
+
+        /** @var \NielsNumbers\LocaleRouting\Illuminate\Routing\UrlGenerator $url */
+        $url = app('url');
+        $this->assertInstanceOf(CustomUrlGenerator::class, $url);
+
+        $route = $url->route('about', [], false);
+
+        $this->assertEquals('/de/about', $route);
+    }
 }
