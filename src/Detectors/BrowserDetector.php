@@ -2,14 +2,23 @@
 
 namespace NielsNumbers\LocaleRouting\Detectors;
 
+use CodeZero\BrowserLocale\BrowserLocale;
+use CodeZero\BrowserLocale\Filters\CombinedFilter;
 use Illuminate\Http\Request;
 use NielsNumbers\LocaleRouting\Contracts\DetectorInterface;
 
 class BrowserDetector implements DetectorInterface
 {
-    public function detect(Request $request): ?string
+    public function detect(Request $request): string|array|null
     {
-        // @toDo integrate browser detetcion ..
-        return null;
+        $header = $request->header('Accept-Language');
+
+        if (! $header) {
+            return null;
+        }
+
+        $locales = (new BrowserLocale($header))->filter(new CombinedFilter());
+
+        return $locales ?: null;
     }
 }
