@@ -86,4 +86,23 @@ class RedirectLocaleTest extends TestCase
         $response = $this->get('/pt-BR/about');
         $response->assertRedirect('/about');
     }
+
+    public function test_preserves_query_string_when_stripping_default_prefix()
+    {
+        App::setLocale('en');
+        Config::set('locale-routing.hide_default_locale', true);
+
+        // Symfony's getQueryString() returns parameters sorted alphabetically.
+        $response = $this->get('/en/about?utm_source=newsletter&ref=foo');
+        $response->assertRedirect('/about?ref=foo&utm_source=newsletter');
+    }
+
+    public function test_preserves_query_string_when_adding_prefix()
+    {
+        App::setLocale('de');
+        Config::set('locale-routing.hide_default_locale', true);
+
+        $response = $this->get('/about?utm_source=newsletter');
+        $response->assertRedirect('/de/about?utm_source=newsletter');
+    }
 }

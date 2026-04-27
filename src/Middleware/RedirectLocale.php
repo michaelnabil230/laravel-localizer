@@ -38,14 +38,22 @@ class RedirectLocale
 
         // Locale prefix matches default + default should be hidden → strip it
         if ($hasLocalePrefix && $prefix === $default && $hideDefault) {
-            return redirect(url('/' . $rest));
+            return $this->redirectTo($request, $rest);
         }
 
         // No locale prefix + app is in a non-default language → add prefix
         if (! $hasLocalePrefix && $locale !== $default) {
-            return redirect(url('/' . $locale . '/' . $path));
+            return $this->redirectTo($request, $locale . '/' . $path);
         }
 
         return $next($request);
+    }
+
+    protected function redirectTo(Request $request, string $path): Response
+    {
+        $url = url('/' . ltrim($path, '/'));
+        $query = $request->getQueryString();
+
+        return redirect($query ? "{$url}?{$query}" : $url);
     }
 }
