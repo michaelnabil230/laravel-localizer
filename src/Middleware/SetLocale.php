@@ -3,11 +3,9 @@
 namespace NielsNumbers\LocaleRouting\Middleware;
 
 use Closure;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\URL;
@@ -20,7 +18,7 @@ class SetLocale
 
     public function handle(Request $request, Closure $next): Response
     {
-        $locale = $this->detectLocale($request);
+        $locale = $this->detectLocale($request) ?? config('app.fallback_locale');
 
         if ($this->localizer->storesInSession()) {
             Session::put('locale', $locale);
@@ -36,34 +34,43 @@ class SetLocale
         return $next($request);
     }
 
-    protected function detectLocale(Request $request): string
+    protected function detectLocale(Request $request): ?string
     {
-        if ($locale = $request->route('locale')) {
-            return $locale;
+        $routeLocale = $request->route('locale');
+        if ($this->localizer->isSupported($routeLocale)) {
+            return $routeLocale;
         }
 
-        if ($this->localizer->storesInSession() && Session::has('locale')) {
-            return Session::get('locale');
+        if ($this->localizer->storesInSession()) {
+            $sessionLocale = Session::get('locale');
+            if ($this->localizer->isSupported($sessionLocale)) {
+                return $sessionLocale;
+            }
         }
 
-        if ($this->localizer->storesInCookie() && $request->cookie('locale')) {
-            return $request->cookie('locale');
+        if ($this->localizer->storesInCookie()) {
+            $cookieLocale = $request->cookie('locale');
+            if ($this->localizer->isSupported($cookieLocale)) {
+                return $cookieLocale;
+            }
         }
 
-        if($locale = $this->detectLocaleFromDetecotrs($request)){
-            return $locale;
-        }
-        return config('app.locale');
+        return $this->detectLocaleFromDetectors($request);
     }
 
-    protected function detectLocaleFromDetecotrs(Request $request): ?string
+    protected function detectLocaleFromDetectors(Request $request): ?string
     {
         foreach ($this->localizer->detectors() as $detectorClass) {
             $detector = app($detectorClass);
-            if ($detector instanceof DetectorInterface) {
-                $locale = $detector->detect($request);
-                if ($locale) {
-                    return $locale;
+            if (! $detector instanceof DetectorInterface) {
+                continue;
+            }
+
+            $result = $detector->detect($request);
+
+            foreach ((array) $result as $candidate) {
+                if ($this->localizer->isSupported($candidate)) {
+                    return $candidate;
                 }
             }
         }

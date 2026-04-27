@@ -31,6 +31,8 @@ class SetLocaleTest extends TestCase
     protected function defineEnvironment($app)
     {
         Config::set('app.locale', 'en');
+        Config::set('app.fallback_locale', 'en');
+        Config::set('locale-routing.supported_locales', ['en', 'de']);
         Config::set('locale-routing.hide_default_locale', true);
         Config::set('locale-routing.persist_locale.session', true);
         Config::set('locale-routing.persist_locale.cookie', true);
@@ -69,5 +71,35 @@ class SetLocaleTest extends TestCase
 
         $this->get('/about');
         $this->assertEquals('de', Session::get('locale'));
+    }
+
+    public function test_ignores_unsupported_locale_in_url()
+    {
+        $this->get('/xx/about');
+
+        $this->assertEquals('en', App::getLocale());
+    }
+
+    public function test_ignores_unsupported_locale_in_session()
+    {
+        session(['locale' => 'xx']);
+
+        $this->get('/about');
+
+        $this->assertEquals('en', App::getLocale());
+    }
+
+    public function test_detects_locale_from_accept_language_header()
+    {
+        $this->get('/about', ['Accept-Language' => 'de-DE,de;q=0.9,en;q=0.8']);
+
+        $this->assertEquals('de', App::getLocale());
+    }
+
+    public function test_skips_accept_language_when_not_supported()
+    {
+        $this->get('/about', ['Accept-Language' => 'fr-FR,fr;q=0.9']);
+
+        $this->assertEquals('en', App::getLocale());
     }
 }
