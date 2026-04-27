@@ -84,12 +84,12 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
     {
         $macroRegisterName = LocalizerFacade::macroRegisterName();
 
-        Route::macro($macroRegisterName, function (callable $callable) {
-            App::make(LocalizeMacro::class)->register($callable);
+        Route::macro($macroRegisterName, function (\Closure $closure) {
+            App::make(LocalizeMacro::class)->register($closure);
         });
 
-        Route::macro('translate', function (callable $callback) {
-            app(TranslateMacro::class)->register($callback);
+        Route::macro('translate', function (\Closure $closure) {
+            app(TranslateMacro::class)->register($closure);
         });
     }
 }
