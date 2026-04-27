@@ -3,14 +3,16 @@
 namespace NielsNumbers\LaravelLocalizer\Macros;
 
 use Closure;
-use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Traits\Localizable;
 use NielsNumbers\LaravelLocalizer\Facades\Localizer;
 use NielsNumbers\LaravelLocalizer\Services\UriTranslator;
 
 class TranslateMacro
 {
+    use Localizable;
+
     public function __construct(
         protected UriTranslator $translator
     ) {}
@@ -19,39 +21,32 @@ class TranslateMacro
      * Register translated routes for all supported locales.
      *
      * For each supported locale:
-     * - temporarily sets the app locale
      * - prefixes the route with the locale (e.g. /de/about)
-     * - uses translated URIs
-     * - creates a "without locale" route for the fallback locale
+     * - uses translated URIs (the user's closure calls Localizer::uri('...'),
+     *   which reads App::getLocale() — hence the per-iteration withLocale)
+     * - creates a "without locale" route for the fallback locale when
+     *   hide_default_locale is on
      */
     public function register(Closure $routes): void
     {
         $supported = Localizer::supportedLocales();
-        $default   = Config::get('app.fallback_locale');
-        $currentLocale = App::getLocale();
-        $hide      = Localizer::hideDefaultLocale();
+        $default = Config::get('app.fallback_locale');
+        $hide = Localizer::hideDefaultLocale();
 
         foreach ($supported as $locale) {
-            App::setLocale($locale);
-
-            Route::prefix($locale)
-                ->name("translated_$locale.")
-                ->group(function () use ($routes, $locale) {
-                    // Inside, user calls Route::get(Localizer::uri('...'))
-                    $routes();
-                });
-
-            // For default locale: create version without prefix
-            if ($locale === $default && $hide) {
-                // There is no need to add a different prefix here then in localize route,
-                // as the route can not be registered twice by same name.
-                // Thus this cannot mismatch with a Localized url
-                Route::name('without_locale.')
+            $this->withLocale($locale, function () use ($routes, $locale, $default, $hide) {
+                Route::prefix($locale)
+                    ->name("translated_$locale.")
                     ->group($routes);
-            }
-        }
 
-        // Restore app locale
-        App::setLocale($currentLocale);
+                // For the default locale: register a no-prefix variant.
+                // The route name namespace ('without_locale.') prevents a
+                // collision with the LocalizeMacro's own without-locale
+                // routes.
+                if ($locale === $default && $hide) {
+                    Route::name('without_locale.')->group($routes);
+                }
+            });
+        }
     }
 }

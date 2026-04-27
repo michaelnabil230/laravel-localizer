@@ -47,4 +47,21 @@ class TranslateMacroTest extends TestCase
 
         $this->assertEquals('fr', App::getLocale());
     }
+
+    public function test_restores_locale_when_closure_throws()
+    {
+        App::setLocale('fr');
+
+        try {
+            Route::translate(function () {
+                throw new \RuntimeException('boom');
+            });
+            $this->fail('expected exception was not thrown');
+        } catch (\RuntimeException $e) {
+            $this->assertSame('boom', $e->getMessage());
+        }
+
+        $this->assertEquals('fr', App::getLocale(),
+            'App locale must be restored even when route registration throws.');
+    }
 }
