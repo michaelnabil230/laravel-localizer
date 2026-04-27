@@ -3,8 +3,8 @@
 namespace NielsNumbers\LaravelLocalizer\Tests\Feature\Services;
 
 use Illuminate\Support\Facades\Lang;
-use Orchestra\Testbench\TestCase;
 use NielsNumbers\LaravelLocalizer\Services\UriTranslator;
+use Orchestra\Testbench\TestCase;
 
 class UriTranslatorTest extends TestCase
 {
@@ -13,44 +13,40 @@ class UriTranslatorTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
         $this->translator = new UriTranslator();
 
         Lang::addLines([
-            'routes.hello' => 'hallo',
-            'routes.world' => 'wereld',
-            'routes.override/hello/world' => 'iets/heel/anders',
-            'routes.hello/world/{parameter}' => 'uri/met/{parameter}',
-        ], 'nl');
-
+            'routes.about' => 'ueber',
+            'routes.blog/post/{slug}' => 'artikel/{slug}',
+        ], 'de');
     }
 
-    public function test_translates_full_uri_if_exact_match_exists()
+    public function test_translates_full_uri()
     {
-        $result = $this->translator->translate('override/hello/world', 'nl');
-        $this->assertEquals('iets/heel/anders', $result);
+        $this->assertSame('ueber', $this->translator->translate('about', 'de'));
     }
 
-    public function test_translates_individual_segments()
+    public function test_translates_full_uri_with_placeholder()
     {
-        $result = $this->translator->translate('hello/world', 'nl');
-        $this->assertEquals('hallo/wereld', $result);
+        $this->assertSame(
+            'artikel/{slug}',
+            $this->translator->translate('blog/post/{slug}', 'de')
+        );
     }
 
-    public function test_keeps_untranslated_segments()
+    public function test_returns_original_uri_when_no_translation_exists()
     {
-        $result = $this->translator->translate('hello/big/world', 'nl');
-        $this->assertEquals('hallo/big/wereld', $result);
+        $this->assertSame('contact', $this->translator->translate('contact', 'de'));
     }
 
-    public function test_preserves_placeholders()
+    public function test_does_not_translate_individual_segments()
     {
-        $result = $this->translator->translate('hello/{parameter}', 'nl');
-        $this->assertEquals('hallo/{parameter}', $result);
-    }
-
-    public function test_translates_exact_match_with_placeholder()
-    {
-        $result = $this->translator->translate('hello/world/{parameter}', 'nl');
-        $this->assertEquals('uri/met/{parameter}', $result);
+        // `routes.about` exists, but `about` as a segment inside another path
+        // must not bleed into unrelated URIs. The whole URI is the lookup key.
+        $this->assertSame(
+            'blog/about/team',
+            $this->translator->translate('blog/about/team', 'de')
+        );
     }
 }

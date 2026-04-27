@@ -2,18 +2,15 @@
 
 namespace NielsNumbers\LaravelLocalizer\Services;
 
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Lang;
-use Illuminate\Support\Str;
 
 /**
  * Translate route URIs using language files in lang/{locale}/routes.php.
  *
- * This implementation is inspired by:
- * https://github.com/codezero-be/laravel-uri-translator/blob/master/src/UriTranslator.php
- *
- * Differences:
- * - Removed namespace/file resolution logic.
+ * Only full-URI keys are honoured — define `routes.blog/post/{slug}`, not
+ * `routes.blog`. Per-segment translation was removed because it produced
+ * unintended hits when the same segment appeared in different contexts
+ * (e.g. translating "about" everywhere, including `/blog/about/team`).
  */
 class UriTranslator
 {
@@ -21,30 +18,8 @@ class UriTranslator
     {
         $key = "routes.$uri";
 
-        if (Lang::has($key, $locale)) {
-            return Lang::get($key, [], $locale);
-        }
-
-        $segments = $this->splitSegments($uri);
-
-        $translated = $segments->map(function ($segment) use ($locale) {
-            // Keep placeholders as-is
-            if (Str::startsWith($segment, '{')) {
-                return $segment;
-            }
-
-            $key = "routes.$segment";
-
-            return Lang::has($key, $locale)
-                ? Lang::get($key, [], $locale)
-                : $segment;
-        });
-
-        return $translated->implode('/');
-    }
-
-    protected function splitSegments(string $uri): Collection
-    {
-        return collect(explode('/', trim($uri, '/')));
+        return Lang::has($key, $locale)
+            ? Lang::get($key, [], $locale)
+            : $uri;
     }
 }
