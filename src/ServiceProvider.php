@@ -115,5 +115,41 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
         Route::macro('localizedUrl', function (string $locale, bool $absolute = true) {
             return app(CurrentRouteLocalizer::class)->localize($locale, $absolute);
         });
+
+        // Has any localized variant of this route name been registered?
+        // Refresh the name lookups first — Laravel only rebuilds them lazily
+        // during request matching, so fresh registrations aren't visible to
+        // Route::has() outside an HTTP request (e.g. when called from boot
+        // code or asserted in tests).
+        Route::macro('hasLocalized', function (string $name): bool {
+            Route::getRoutes()->refreshNameLookups();
+
+            if (Route::has('with_locale.'.$name) || Route::has('without_locale.'.$name)) {
+                return true;
+            }
+
+            foreach (LocalizerFacade::supportedLocales() as $locale) {
+                if (Route::has("translated_$locale.$name")) {
+                    return true;
+                }
+            }
+
+            return false;
+        });
+
+        // Is the current request handled by a localizer-managed route?
+        Route::macro('isLocalized', function (): bool {
+            $current = Route::current();
+            if ($current === null) {
+                return false;
+            }
+
+            $name = $current->getName() ?? '';
+
+            return \Illuminate\Support\Str::startsWith(
+                $name,
+                ['with_locale.', 'without_locale.', 'translated_']
+            );
+        });
     }
 }
