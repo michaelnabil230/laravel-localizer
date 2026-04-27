@@ -75,6 +75,31 @@ Route::localize(function () {
 > database, or trigger external calls inside it. Treat it as a pure route
 > definition.
 
+### URL Generation Is Context-Dependent
+
+`route('about')` resolves to a different URL depending on the current
+`App::getLocale()` — the same call inside an HTTP request, a queued job, or a
+mailable can yield different results. That's the whole point: you keep using
+`route('about')` everywhere and the package picks the right variant.
+
+```php
+App::setLocale('en');
+route('about'); // → /about      (default locale, hidden via hide_default_locale)
+
+App::setLocale('de');
+route('about'); // → /de/about
+
+route('about', ['locale' => 'en']); // → /about (explicit override wins)
+```
+
+This is **fully compatible with `php artisan route:cache`**. The cache
+serializes the *route definitions* (`with_locale.about` → `/{locale}/about`,
+`without_locale.about` → `/about`) — those are static and deterministic. The
+locale-aware *selection* between them happens at runtime in the URL generator,
+which is unaffected by the cache. URL-translated routes built by
+`Route::translate()` are likewise baked into static URIs at registration
+time, so the cache covers them too.
+
 ## Configuration
 
 You can publish the configuration file with:
