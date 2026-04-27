@@ -19,8 +19,12 @@ class Localizer
 
     public function supportedLocales(): array
     {
-        return Config::get('locale-routing.supported_locales', true);
         return Config::get('locale-routing.supported_locales', []);
+    }
+
+    public function isSupported(?string $locale): bool
+    {
+        return $locale !== null && in_array($locale, $this->supportedLocales(), true);
     }
 
 
