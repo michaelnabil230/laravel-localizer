@@ -1,7 +1,7 @@
 # Laravel Locale Routing
 
 Detect the user’s preferred language from the request and redirect them to the correct localized URL.  
-You can hide the default locale in the URI or translate your URIs.
+You can hide the default locale in the URI. You can also translate your URIs.
 
 ---
 
@@ -30,6 +30,7 @@ Use this package if you want:
 
 - automatic locale detection from the request (e.g. from the browser)
 - automatic redirects to localized routes
+- possibility to hide the default locale in the URL 
 - fully translatable routes (e.g. `/en/humans`, `/de/menschen`, etc.)
 
 You **don’t** need it if you are fine with only:
@@ -45,10 +46,11 @@ and do not need `example.com/blog` or locale detection from the browser.
   This package is the modern successor to *laravel-localization*, which is no longer maintained.
   The original package was the first package that tried to solve the routing problem.
 It generated routes dynamically at runtime, making it incompatible with `php artisan route:cache` and several Laravel packages.
-  In contrast, this package registers **two static routes** per definition — one with a `{locale}` placeholder and one without — making it fully cache-safe and compatible with all modern Laravel packages.
+  In contrast, this package registers **two static routes** per definition — one with a `{locale}` placeholder and one without — 
+- making it fully cache-safe and compatible with most modern Laravel packages.
 
 - **[codezero-be/laravel-localized-routes](https://github.com/codezero-be/laravel-localized-routes) (deprecated)**  
-  An  alternative to *laravel-localization*, using a **route-per-locale** approach (N× routes, one per language).  
+  An alternative to *laravel-localization*, using a **route-per-locale** approach (N× routes, one per language).  
   While that package is no longer maintained, many of its design ideas influenced this one.  
   Here, only **two routes** per definition are created — striking a balance between performance, maintainability, and flexibility.
 
@@ -187,7 +189,7 @@ I (Adam Nielsen) was a collaborator on the original package, and since @mcamara 
 The original package from mcamara has a very long legacy.
 
 The [original package](https://github.com/mcamara/laravel-localization) generated **dynamic routes**,
-which led to cache and compatibility issues.  
+which led to cache and compatibility issues.
 [laravel-localized-routes](https://github.com/codezero-be/laravel-localized-routes) solved this by generating **static routes for each locale** (N× per definition).
 
 This package takes a **middle path**: each route is registered **twice** —  
