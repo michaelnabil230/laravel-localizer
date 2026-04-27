@@ -4,13 +4,13 @@ namespace NielsNumbers\LaravelLocalizer\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\URL;
 use NielsNumbers\LaravelLocalizer\Contracts\DetectorInterface;
 use NielsNumbers\LaravelLocalizer\Localizer;
+use Symfony\Component\HttpFoundation\Response;
 
 class SetLocale
 {
