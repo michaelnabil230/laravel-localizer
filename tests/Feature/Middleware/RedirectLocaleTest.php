@@ -36,6 +36,7 @@ class RedirectLocaleTest extends TestCase
     protected function defineEnvironment($app)
     {
         Config::set('app.fallback_locale', 'en');
+        Config::set('locale-routing.supported_locales', ['en', 'de', 'pt-BR']);
     }
 
     public function test_redirects_default_locale_when_hidden()
@@ -63,5 +64,26 @@ class RedirectLocaleTest extends TestCase
 
         $response = $this->get('/about');
         $response->assertOk();
+    }
+
+    public function test_does_not_treat_unsupported_two_letter_prefix_as_locale()
+    {
+        App::setLocale('en');
+        Config::set('locale-routing.hide_default_locale', true);
+
+        Route::middleware(RedirectLocale::class)->get('/xx/about', fn() => 'ok');
+
+        $response = $this->get('/xx/about');
+        $response->assertOk();
+    }
+
+    public function test_handles_multi_character_locale_prefix()
+    {
+        App::setLocale('pt-BR');
+        Config::set('app.fallback_locale', 'pt-BR');
+        Config::set('locale-routing.hide_default_locale', true);
+
+        $response = $this->get('/pt-BR/about');
+        $response->assertRedirect('/about');
     }
 }

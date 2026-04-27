@@ -6,10 +6,13 @@ use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Config;
+use NielsNumbers\LocaleRouting\Localizer;
 use Symfony\Component\HttpFoundation\Response;
 
 class RedirectLocale
 {
+    public function __construct(protected Localizer $localizer) {}
+
     public function handle(Request $request, Closure $next): Response
     {
         if (! Config::get('locale-routing.redirect_enabled', true)) {
@@ -21,15 +24,26 @@ class RedirectLocale
         $hideDefault = Config::get('locale-routing.hide_default_locale', true);
 
         $path = ltrim($request->path(), '/');
-        // if route has locale prefix and it's default locale → redirect to non-prefixed
-        if (preg_match("#^{$locale}/#", $path) && $locale === $default && $hideDefault) {
-            $path = preg_replace("#^/?{$default}#", '', $request->path());
-            return redirect(url($path));
+        // We can't use $request->route('locale'): only LocalizeMacro routes
+        // (/{locale}/about) declare it as a parameter. TranslateMacro routes
+        // (/de/ueber), directly registered routes (Route::get('/de/foo')) and
+        // without_locale.* routes don't — yet they all need this middleware.
+        // So we look at the raw path and split off the first segment ourselves.
+        [$prefix, $rest] = array_pad(explode('/', $path, 2), 2, '');
+
+        // The first path segment counts as a locale only if it's whitelisted —
+        // matching by regex would either miss multi-character tags (zh-CN, pt-BR)
+        // or treat any two-letter prefix as a locale, redirecting nonsense paths.
+        $hasLocalePrefix = $this->localizer->isSupported($prefix);
+
+        // Locale prefix matches default + default should be hidden → strip it
+        if ($hasLocalePrefix && $prefix === $default && $hideDefault) {
+            return redirect(url('/' . $rest));
         }
 
-        // if route has no locale prefix and it's not default → redirect to prefixed
-        if (! preg_match("#^[a-z]{2}/#", $path) && $locale !== $default) {
-            return redirect(url("{$locale}/{$request->path()}"));
+        // No locale prefix + app is in a non-default language → add prefix
+        if (! $hasLocalePrefix && $locale !== $default) {
+            return redirect(url('/' . $locale . '/' . $path));
         }
 
         return $next($request);
