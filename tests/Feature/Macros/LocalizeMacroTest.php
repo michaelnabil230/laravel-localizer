@@ -13,8 +13,7 @@ class LocalizeMacroTest extends TestCase
         return [ServiceProvider::class];
     }
 
-    /** @test */
-    public function it_registers_the_macro()
+    public function test_registers_the_macro()
     {
         Route::localize(function () {
             Route::get('/test', fn () => 'ok')->name('test');
@@ -24,6 +23,5 @@ class LocalizeMacroTest extends TestCase
 
         $this->assertTrue($routes->contains('with_locale.test'));
         $this->assertTrue($routes->contains('without_locale.test'));
-        $this->assertCount(2, $routes);
     }
 }

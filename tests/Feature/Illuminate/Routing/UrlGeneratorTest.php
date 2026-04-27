@@ -4,7 +4,6 @@ namespace NielsNumbers\LaravelLocalizer\Tests\Feature\Illuminate\Routing;
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\App;
-use PHPUnit\Framework\Attributes\Test;
 use Orchestra\Testbench\TestCase;
 use NielsNumbers\LaravelLocalizer\ServiceProvider;
 use NielsNumbers\LaravelLocalizer\Illuminate\Routing\UrlGenerator as CustomUrlGenerator;
@@ -18,8 +17,7 @@ class UrlGeneratorTest extends TestCase
         return [ServiceProvider::class];
     }
 
-    #[Test]
-    public function it_replaces_the_default_url_generator()
+    public function test_replaces_the_default_url_generator()
     {
         $url = $this->app->make(UrlGeneratorContract::class);
 
@@ -27,8 +25,7 @@ class UrlGeneratorTest extends TestCase
         $this->assertSame($url, app('url')); // both bindings are identical
     }
 
-    #[Test]
-    public function it_throws_exception_if_route_is_not_found()
+    public function test_throws_exception_if_route_is_not_found()
     {
         // Route::get('/test', fn () => 'ok')->name('test');
 
@@ -43,8 +40,7 @@ class UrlGeneratorTest extends TestCase
         $url->route('test');
     }
 
-    #[Test]
-    public function it_works_for_standard_routes()
+    public function test_works_for_standard_routes()
     {
         Route::get('/test', fn () => 'ok')->name('test');
 
@@ -60,8 +56,7 @@ class UrlGeneratorTest extends TestCase
     }
 
 
-    /** @test */
-    public function it_works_for_route_with_locale()
+    public function test_works_for_route_with_locale()
     {
         Route::get('/{locale}/about', fn () => 'ok')->name('with_locale.about');
         Route::get('/about', fn () => 'ok')->name('without_locale.about');
@@ -77,8 +72,7 @@ class UrlGeneratorTest extends TestCase
         $this->assertEquals('/de/about', $route);
     }
 
-     /** @test */
-    public function it_works_for_route_without_locale()
+    public function test_works_for_route_without_locale()
     {
         // Laravel’s default locale (from config/app.php)
         config()->set('app.locale', 'en');
@@ -101,8 +95,7 @@ class UrlGeneratorTest extends TestCase
         $this->assertEquals('/about', $route);
     }
 
-    /** @test */
-    public function it_works_for_route_without_locale_without_parameters()
+    public function test_works_for_route_without_locale_without_parameters()
     {
         // Laravel’s default locale (from config/app.php)
         config()->set('app.locale', 'en');
@@ -125,8 +118,7 @@ class UrlGeneratorTest extends TestCase
         $this->assertEquals('/about', $route);
     }
 
-    /** @test */
-    public function it_works_for_switch_to_route_without_locale()
+    public function test_works_for_switch_to_route_without_locale()
     {
         app()->setLocale('de');
 
@@ -147,8 +139,7 @@ class UrlGeneratorTest extends TestCase
         $this->assertEquals('/en/about', $route);
     }
 
-    /** @test */
-    public function it_autoloads_locale_into_route()
+    public function test_autoloads_locale_into_route()
     {
         app()->setLocale('de');
 
@@ -168,8 +159,7 @@ class UrlGeneratorTest extends TestCase
     }
 
 
-    /** @test */
-    public function it_loads_translated_de_route()
+    public function test_loads_translated_de_route()
     {
         app()->setLocale('de');
 
@@ -189,8 +179,7 @@ class UrlGeneratorTest extends TestCase
         $this->assertEquals('/de/ueber', $route);
     }
 
-    /** @test */
-    public function it_loads_translated_en_route_with_locale_in_url()
+    public function test_loads_translated_en_route_with_locale_in_url()
     {
         app()->setLocale('de');
 
@@ -210,8 +199,7 @@ class UrlGeneratorTest extends TestCase
         $this->assertEquals('/en/about', $route);
     }
 
-    /** @test */
-    public function it_loads_translated_en_route_without_locale_in_url()
+    public function test_loads_translated_en_route_without_locale_in_url()
     {
         app()->setLocale('en');
 
@@ -231,8 +219,7 @@ class UrlGeneratorTest extends TestCase
         $this->assertEquals('/about', $route);
     }
 
-    /** @test */
-    public function it_loads_translated_en_route_without_locale_in_url_without_parameter()
+    public function test_loads_translated_en_route_without_locale_in_url_without_parameter()
     {
         app()->setLocale('en');
 

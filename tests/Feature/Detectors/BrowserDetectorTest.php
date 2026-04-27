@@ -8,8 +8,7 @@ use Orchestra\Testbench\TestCase;
 
 class BrowserDetectorTest extends TestCase
 {
-    /** @test */
-    public function it_returns_null_when_no_accept_language_header_is_present()
+    public function test_returns_null_when_no_accept_language_header_is_present()
     {
         $request = Request::create('/');
         $request->headers->remove('Accept-Language');
@@ -17,8 +16,7 @@ class BrowserDetectorTest extends TestCase
         $this->assertNull((new BrowserDetector())->detect($request));
     }
 
-    /** @test */
-    public function it_returns_ordered_locale_candidates_from_accept_language()
+    public function test_returns_ordered_locale_candidates_from_accept_language()
     {
         $request = Request::create('/', 'GET', [], [], [], [
             'HTTP_ACCEPT_LANGUAGE' => 'de-DE,de;q=0.9,en;q=0.8',
@@ -30,8 +28,7 @@ class BrowserDetectorTest extends TestCase
         $this->assertSame(['de-DE', 'de', 'en'], $result);
     }
 
-    /** @test */
-    public function it_orders_by_quality_weight()
+    public function test_orders_by_quality_weight()
     {
         $request = Request::create('/', 'GET', [], [], [], [
             'HTTP_ACCEPT_LANGUAGE' => 'fr;q=0.5,en;q=0.9,de;q=0.8',

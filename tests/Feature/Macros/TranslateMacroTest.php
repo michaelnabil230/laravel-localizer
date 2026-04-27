@@ -26,8 +26,7 @@ class TranslateMacroTest extends TestCase
         Localizer::shouldReceive('hideDefaultLocale')->andReturn(true);
     }
 
-    /** @test */
-    public function it_registers_routes_for_each_locale()
+    public function test_registers_routes_for_each_locale()
     {
         Route::translate(function () {
             Route::get('about', fn() => 'ok')->name('about');
@@ -40,8 +39,7 @@ class TranslateMacroTest extends TestCase
         $this->assertTrue($routes->contains('without_locale.about'));
     }
 
-    /** @test */
-    public function it_restores_locale_after_registration()
+    public function test_restores_locale_after_registration()
     {
         App::setLocale('fr');
 

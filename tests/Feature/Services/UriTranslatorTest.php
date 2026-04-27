@@ -24,36 +24,31 @@ class UriTranslatorTest extends TestCase
 
     }
 
-    /** @test */
-    public function it_translates_full_uri_if_exact_match_exists()
+    public function test_translates_full_uri_if_exact_match_exists()
     {
         $result = $this->translator->translate('override/hello/world', 'nl');
         $this->assertEquals('iets/heel/anders', $result);
     }
 
-    /** @test */
-    public function it_translates_individual_segments()
+    public function test_translates_individual_segments()
     {
         $result = $this->translator->translate('hello/world', 'nl');
         $this->assertEquals('hallo/wereld', $result);
     }
 
-    /** @test */
-    public function it_keeps_untranslated_segments()
+    public function test_keeps_untranslated_segments()
     {
         $result = $this->translator->translate('hello/big/world', 'nl');
         $this->assertEquals('hallo/big/wereld', $result);
     }
 
-    /** @test */
-    public function it_preserves_placeholders()
+    public function test_preserves_placeholders()
     {
         $result = $this->translator->translate('hello/{parameter}', 'nl');
         $this->assertEquals('hallo/{parameter}', $result);
     }
 
-    /** @test */
-    public function it_translates_exact_match_with_placeholder()
+    public function test_translates_exact_match_with_placeholder()
     {
         $result = $this->translator->translate('hello/world/{parameter}', 'nl');
         $this->assertEquals('uri/met/{parameter}', $result);
