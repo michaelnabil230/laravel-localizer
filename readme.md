@@ -59,6 +59,22 @@ It generated routes dynamically at runtime, making it incompatible with `php art
   It works perfectly alongside this package if you want translatable slugs.
 
 
+## Defining Routes
+
+Wrap your routes with `Route::localize()` to register them in both their prefixed
+(`/{locale}/about`) and unprefixed (`/about`) form:
+
+```php
+Route::localize(function () {
+    Route::get('/about', AboutController::class)->name('about');
+});
+```
+
+> **Important:** the closure passed to `Route::localize()` is executed **twice**
+> — once per route variant. Keep it side-effect-free: do not log, write to the
+> database, or trigger external calls inside it. Treat it as a pure route
+> definition.
+
 ## Configuration
 
 You can publish the configuration file with:
