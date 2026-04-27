@@ -3,6 +3,7 @@
 namespace NielsNumbers\LaravelLocalizer;
 
 use Illuminate\Contracts\Routing\UrlGenerator as UrlGeneratorContract;
+use Illuminate\Routing\RouteRegistrar;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Route;
 use NielsNumbers\LaravelLocalizer\Facades\Localizer as LocalizerFacade;
@@ -90,6 +91,24 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
 
         Route::macro('translate', function (\Closure $closure) {
             app(TranslateMacro::class)->register($closure);
+        });
+
+        // Mirror the macros on RouteRegistrar so chained calls work too:
+        //   Route::middleware('auth')->localize(...)
+        //   Route::prefix('admin')->translate(...)
+        // $this->group() applies the registrar's collected attributes to a
+        // group on the router, then the inner macro registers its variants
+        // inside that group — Laravel composes the attributes correctly.
+        RouteRegistrar::macro($macroRegisterName, function (\Closure $closure) {
+            $this->group(function () use ($closure) {
+                App::make(LocalizeMacro::class)->register($closure);
+            });
+        });
+
+        RouteRegistrar::macro('translate', function (\Closure $closure) {
+            $this->group(function () use ($closure) {
+                app(TranslateMacro::class)->register($closure);
+            });
         });
     }
 }
