@@ -28,7 +28,7 @@ class TranslateMacro
     {
         $supported = Localizer::supportedLocales();
         $default   = Config::get('app.fallback_locale');
-        $currentLocae = App::getLocale();
+        $currentLocale = App::getLocale();
         $hide      = Localizer::hideDefaultLocale();
 
         foreach ($supported as $locale) {
@@ -52,6 +52,6 @@ class TranslateMacro
         }
 
         // Restore app locale
-        App::setLocale($currentLocae);
+        App::setLocale($currentLocale);
     }
 }
