@@ -166,4 +166,90 @@ class UrlGeneratorTest extends TestCase
 
         $this->assertEquals('/de/about', $route);
     }
+
+
+    /** @test */
+    public function it_loads_translated_de_route()
+    {
+        app()->setLocale('de');
+
+        config()->set('locale-routing.supported_locales', ['en', 'de']);
+        config()->set('locale-routing.hide_default_locale', true);
+
+        Route::get('/de/ueber', fn () => 'ok')->name('translated_de.about');
+        Route::get('/en/about', fn () => 'ok')->name('translated_en.about');
+        Route::get('/about', fn () => 'ok')->name('without_locale.about');
+
+        /** @var \NielsNumbers\LocaleRouting\Illuminate\Routing\UrlGenerator $url */
+        $url = app('url');
+        $this->assertInstanceOf(CustomUrlGenerator::class, $url);
+
+        $route = $url->route('about', [], false);
+
+        $this->assertEquals('/de/ueber', $route);
+    }
+
+    /** @test */
+    public function it_loads_translated_en_route_with_locale_in_url()
+    {
+        app()->setLocale('de');
+
+        config()->set('locale-routing.supported_locales', ['en', 'de']);
+        config()->set('locale-routing.hide_default_locale', true);
+
+        Route::get('/de/ueber', fn () => 'ok')->name('translated_de.about');
+        Route::get('/en/about', fn () => 'ok')->name('translated_en.about');
+        Route::get('/about', fn () => 'ok')->name('without_locale.about');
+
+        /** @var \NielsNumbers\LocaleRouting\Illuminate\Routing\UrlGenerator $url */
+        $url = app('url');
+        $this->assertInstanceOf(CustomUrlGenerator::class, $url);
+
+        $route = $url->route('about', ['locale' => 'en'], false);
+
+        $this->assertEquals('/en/about', $route);
+    }
+
+    /** @test */
+    public function it_loads_translated_en_route_without_locale_in_url()
+    {
+        app()->setLocale('en');
+
+        config()->set('locale-routing.supported_locales', ['en', 'de']);
+        config()->set('locale-routing.hide_default_locale', true);
+
+        Route::get('/de/ueber', fn () => 'ok')->name('translated_de.about');
+        Route::get('/en/about', fn () => 'ok')->name('translated_en.about');
+        Route::get('/about', fn () => 'ok')->name('without_locale.about');
+
+        /** @var \NielsNumbers\LocaleRouting\Illuminate\Routing\UrlGenerator $url */
+        $url = app('url');
+        $this->assertInstanceOf(CustomUrlGenerator::class, $url);
+
+        $route = $url->route('about', ['locale' => 'en'], false);
+
+        $this->assertEquals('/about', $route);
+    }
+
+    /** @test */
+    public function it_loads_translated_en_route_without_locale_in_url_without_parameter()
+    {
+        app()->setLocale('en');
+
+        config()->set('locale-routing.supported_locales', ['en', 'de']);
+        config()->set('locale-routing.hide_default_locale', true);
+
+        Route::get('/de/ueber', fn () => 'ok')->name('translated_de.about');
+        Route::get('/en/about', fn () => 'ok')->name('translated_en.about');
+        Route::get('/about', fn () => 'ok')->name('without_locale.about');
+
+        /** @var \NielsNumbers\LocaleRouting\Illuminate\Routing\UrlGenerator $url */
+        $url = app('url');
+        $this->assertInstanceOf(CustomUrlGenerator::class, $url);
+
+        $route = $url->route('about', [], false);
+
+        $this->assertEquals('/about', $route);
+    }
+
 }
