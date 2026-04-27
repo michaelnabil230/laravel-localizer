@@ -1,6 +1,6 @@
 <?php
 
-namespace NielsNumbers\LocaleRouting\Macros;
+namespace NielsNumbers\LaravelLocalizer\Macros;
 
 use Closure;
 use Illuminate\Support\Facades\Route;

@@ -1,13 +1,13 @@
 <?php
 
-namespace NielsNumbers\LocaleRouting\Illuminate\Routing;
+namespace NielsNumbers\LaravelLocalizer\Illuminate\Routing;
 
 use Illuminate\Http\Request;
 use Illuminate\Routing\RouteCollectionInterface;
 use Illuminate\Routing\UrlGenerator as BaseUrlGenerator;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Route;
-use NielsNumbers\LocaleRouting\Facades\Localizer;
+use NielsNumbers\LaravelLocalizer\Facades\Localizer;
 
 class UrlGenerator extends BaseUrlGenerator
 {

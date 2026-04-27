@@ -1,13 +1,13 @@
 <?php
 
-namespace NielsNumbers\LocaleRouting\Macros;
+namespace NielsNumbers\LaravelLocalizer\Macros;
 
 use Closure;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Route;
-use NielsNumbers\LocaleRouting\Facades\Localizer;
-use NielsNumbers\LocaleRouting\Services\UriTranslator;
+use NielsNumbers\LaravelLocalizer\Facades\Localizer;
+use NielsNumbers\LaravelLocalizer\Services\UriTranslator;
 
 class TranslateMacro
 {

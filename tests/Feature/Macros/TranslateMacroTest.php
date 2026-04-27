@@ -1,13 +1,13 @@
 <?php
 
-namespace NielsNumbers\LocaleRouting\Tests\Feature\Macros;
+namespace NielsNumbers\LaravelLocalizer\Tests\Feature\Macros;
 
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Route;
 use Orchestra\Testbench\TestCase;
-use NielsNumbers\LocaleRouting\ServiceProvider;
-use NielsNumbers\LocaleRouting\Facades\Localizer;
+use NielsNumbers\LaravelLocalizer\ServiceProvider;
+use NielsNumbers\LaravelLocalizer\Facades\Localizer;
 
 class TranslateMacroTest extends TestCase
 {

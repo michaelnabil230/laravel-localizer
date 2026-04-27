@@ -1,9 +1,9 @@
 <?php
 
-namespace NielsNumbers\LocaleRouting\Tests\Feature\Macros;
+namespace NielsNumbers\LaravelLocalizer\Tests\Feature\Macros;
 
 use Illuminate\Support\Facades\Route;
-use NielsNumbers\LocaleRouting\ServiceProvider;
+use NielsNumbers\LaravelLocalizer\ServiceProvider;
 use Orchestra\Testbench\TestCase;
 
 class LocalizeMacroTest extends TestCase

@@ -1,6 +1,6 @@
 <?php
 
-namespace NielsNumbers\LocaleRouting\Contracts;
+namespace NielsNumbers\LaravelLocalizer\Contracts;
 
 use Illuminate\Http\Request;
 

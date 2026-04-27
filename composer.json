@@ -1,5 +1,5 @@
 {
-    "name": "niels-numbers/laravel-localization",
+    "name": "niels-numbers/laravel-localizer",
     "description": "Detects the user’s preferred language and redirects to the matching localized URL.",
     "keywords": [
         "php",
@@ -31,18 +31,18 @@
     },
     "autoload": {
         "psr-4": {
-            "NielsNumbers\\LocaleRouting\\": "src"
+            "NielsNumbers\\LaravelLocalizer\\": "src"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "NielsNumbers\\LocaleRouting\\Tests\\": "tests"
+            "NielsNumbers\\LaravelLocalizer\\Tests\\": "tests"
         }
     },
     "extra": {
         "laravel": {
             "providers": [
-                "NielsNumbers\\LocaleRouting\\ServiceProvider"
+                "NielsNumbers\\LaravelLocalizer\\ServiceProvider"
             ]
         }
     },

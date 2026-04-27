@@ -1,15 +1,15 @@
 <?php
 
-namespace NielsNumbers\LocaleRouting\Tests\Feature\Middleware;
+namespace NielsNumbers\LaravelLocalizer\Tests\Feature\Middleware;
 
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Session;
 use Orchestra\Testbench\TestCase;
-use NielsNumbers\LocaleRouting\Middleware\SetLocale;
-use NielsNumbers\LocaleRouting\Localizer;
-use NielsNumbers\LocaleRouting\ServiceProvider;
+use NielsNumbers\LaravelLocalizer\Middleware\SetLocale;
+use NielsNumbers\LaravelLocalizer\Localizer;
+use NielsNumbers\LaravelLocalizer\ServiceProvider;
 
 class SetLocaleTest extends TestCase
 {
@@ -32,10 +32,10 @@ class SetLocaleTest extends TestCase
     {
         Config::set('app.locale', 'en');
         Config::set('app.fallback_locale', 'en');
-        Config::set('locale-routing.supported_locales', ['en', 'de']);
-        Config::set('locale-routing.hide_default_locale', true);
-        Config::set('locale-routing.persist_locale.session', true);
-        Config::set('locale-routing.persist_locale.cookie', true);
+        Config::set('localizer.supported_locales', ['en', 'de']);
+        Config::set('localizer.hide_default_locale', true);
+        Config::set('localizer.persist_locale.session', true);
+        Config::set('localizer.persist_locale.cookie', true);
     }
 
     protected function defineRoutes($router)
@@ -57,7 +57,7 @@ class SetLocaleTest extends TestCase
 
     public function test_stores_locale_in_session()
     {
-        Config::set('locale-routing.use_session', true);
+        Config::set('localizer.use_session', true);
         Session::flush();
 
         $this->get('/de/about');
@@ -66,7 +66,7 @@ class SetLocaleTest extends TestCase
 
     public function test_reads_locale_from_session()
     {
-        Config::set('locale-routing.use_session', true);
+        Config::set('localizer.use_session', true);
         session(['locale' => 'de']);
 
         $this->get('/about');

@@ -13,7 +13,7 @@ return [
     ],
 
     'detectors' => [
-        \NielsNumbers\LocaleRouting\Detectors\UserDetector::class,
-        \NielsNumbers\LocaleRouting\Detectors\BrowserDetector::class,
+        \NielsNumbers\LaravelLocalizer\Detectors\UserDetector::class,
+        \NielsNumbers\LaravelLocalizer\Detectors\BrowserDetector::class,
     ],
 ];

@@ -1,10 +1,10 @@
 <?php
 
-namespace NielsNumbers\LocaleRouting\Tests\Feature\Services;
+namespace NielsNumbers\LaravelLocalizer\Tests\Feature\Services;
 
 use Illuminate\Support\Facades\Lang;
 use Orchestra\Testbench\TestCase;
-use NielsNumbers\LocaleRouting\Services\UriTranslator;
+use NielsNumbers\LaravelLocalizer\Services\UriTranslator;
 
 class UriTranslatorTest extends TestCase
 {

@@ -1,4 +1,4 @@
-# Laravel Locale Routing
+# Laravel Localizer
 
 Detect the user’s preferred language from the request and redirect them to the correct localized URL.  
 You can hide the default locale in the URI. You can also translate your URIs.
@@ -64,10 +64,10 @@ It generated routes dynamically at runtime, making it incompatible with `php art
 You can publish the configuration file with:
 
 ```bash
-php artisan vendor:publish --provider="NielsNumbers\\LocaleRouting\\ServiceProvider" --tag=config
+php artisan vendor:publish --provider="NielsNumbers\\LaravelLocalizer\\ServiceProvider" --tag=config
 ```
 
-This will create a file at `config/locale-routing.php`.
+This will create a file at `config/localizer.php`.
 
 ---
 
@@ -101,8 +101,8 @@ Example:
 ```php
 'detectors' => [
     \App\Locale\CustomDetector::class,
-    \NielsNumbers\LocaleRouting\Detectors\UserDetector::class,
-    \NielsNumbers\LocaleRouting\Detectors\BrowserDetector::class,
+    \NielsNumbers\LaravelLocalizer\Detectors\UserDetector::class,
+    \NielsNumbers\LaravelLocalizer\Detectors\BrowserDetector::class,
 ],
 ```
 

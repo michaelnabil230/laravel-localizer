@@ -1,13 +1,13 @@
 <?php
 
-namespace NielsNumbers\LocaleRouting\Tests\Feature\Middleware;
+namespace NielsNumbers\LaravelLocalizer\Tests\Feature\Middleware;
 
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Route;
-use NielsNumbers\LocaleRouting\Middleware\RedirectLocale;
+use NielsNumbers\LaravelLocalizer\Middleware\RedirectLocale;
 use Orchestra\Testbench\TestCase;
-use NielsNumbers\LocaleRouting\ServiceProvider;
+use NielsNumbers\LaravelLocalizer\ServiceProvider;
 
 class RedirectLocaleTest extends TestCase
 {
@@ -36,13 +36,13 @@ class RedirectLocaleTest extends TestCase
     protected function defineEnvironment($app)
     {
         Config::set('app.fallback_locale', 'en');
-        Config::set('locale-routing.supported_locales', ['en', 'de', 'pt-BR']);
+        Config::set('localizer.supported_locales', ['en', 'de', 'pt-BR']);
     }
 
     public function test_redirects_default_locale_when_hidden()
     {
         App::setLocale('en');
-        Config::set('locale-routing.hide_default_locale', true);
+        Config::set('localizer.hide_default_locale', true);
 
         $response = $this->get('/en/about');
         $response->assertRedirect('/about');
@@ -51,7 +51,7 @@ class RedirectLocaleTest extends TestCase
     public function test_redirects_to_prefixed_locale_when_missing()
     {
         App::setLocale('de');
-        Config::set('locale-routing.hide_default_locale', true);
+        Config::set('localizer.hide_default_locale', true);
 
         $response = $this->get('/about');
         $response->assertRedirect('/de/about');
@@ -60,7 +60,7 @@ class RedirectLocaleTest extends TestCase
     public function test_no_redirect_when_disabled()
     {
         App::setLocale('en');
-        Config::set('locale-routing.redirect_enabled', false);
+        Config::set('localizer.redirect_enabled', false);
 
         $response = $this->get('/about');
         $response->assertOk();
@@ -69,7 +69,7 @@ class RedirectLocaleTest extends TestCase
     public function test_does_not_treat_unsupported_two_letter_prefix_as_locale()
     {
         App::setLocale('en');
-        Config::set('locale-routing.hide_default_locale', true);
+        Config::set('localizer.hide_default_locale', true);
 
         Route::middleware(RedirectLocale::class)->get('/xx/about', fn() => 'ok');
 
@@ -81,7 +81,7 @@ class RedirectLocaleTest extends TestCase
     {
         App::setLocale('pt-BR');
         Config::set('app.fallback_locale', 'pt-BR');
-        Config::set('locale-routing.hide_default_locale', true);
+        Config::set('localizer.hide_default_locale', true);
 
         $response = $this->get('/pt-BR/about');
         $response->assertRedirect('/about');
@@ -90,7 +90,7 @@ class RedirectLocaleTest extends TestCase
     public function test_preserves_query_string_when_stripping_default_prefix()
     {
         App::setLocale('en');
-        Config::set('locale-routing.hide_default_locale', true);
+        Config::set('localizer.hide_default_locale', true);
 
         // Symfony's getQueryString() returns parameters sorted alphabetically.
         $response = $this->get('/en/about?utm_source=newsletter&ref=foo');
@@ -100,7 +100,7 @@ class RedirectLocaleTest extends TestCase
     public function test_preserves_query_string_when_adding_prefix()
     {
         App::setLocale('de');
-        Config::set('locale-routing.hide_default_locale', true);
+        Config::set('localizer.hide_default_locale', true);
 
         $response = $this->get('/about?utm_source=newsletter');
         $response->assertRedirect('/de/about?utm_source=newsletter');

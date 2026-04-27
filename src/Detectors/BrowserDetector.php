@@ -1,11 +1,11 @@
 <?php
 
-namespace NielsNumbers\LocaleRouting\Detectors;
+namespace NielsNumbers\LaravelLocalizer\Detectors;
 
 use CodeZero\BrowserLocale\BrowserLocale;
 use CodeZero\BrowserLocale\Filters\CombinedFilter;
 use Illuminate\Http\Request;
-use NielsNumbers\LocaleRouting\Contracts\DetectorInterface;
+use NielsNumbers\LaravelLocalizer\Contracts\DetectorInterface;
 
 class BrowserDetector implements DetectorInterface
 {

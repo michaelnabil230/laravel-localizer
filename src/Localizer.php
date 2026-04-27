@@ -1,14 +1,14 @@
 <?php
 
-namespace NielsNumbers\LocaleRouting;
+namespace NielsNumbers\LaravelLocalizer;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Session;
-use NielsNumbers\LocaleRouting\Contracts\DetectorInterface;
-use NielsNumbers\LocaleRouting\Services\UriTranslator;
+use NielsNumbers\LaravelLocalizer\Contracts\DetectorInterface;
+use NielsNumbers\LaravelLocalizer\Services\UriTranslator;
 
 class Localizer
 {
@@ -19,7 +19,7 @@ class Localizer
 
     public function supportedLocales(): array
     {
-        return Config::get('locale-routing.supported_locales', []);
+        return Config::get('localizer.supported_locales', []);
     }
 
     public function isSupported(?string $locale): bool
@@ -30,22 +30,22 @@ class Localizer
 
     public function hideDefaultLocale(): bool
     {
-        return Config::get('locale-routing.hide_default_locale', true);
+        return Config::get('localizer.hide_default_locale', true);
     }
 
     public function storesInSession(): bool
     {
-        return Config::get('locale-routing.persist_locale.session', true);
+        return Config::get('localizer.persist_locale.session', true);
     }
 
     public function storesInCookie(): bool
     {
-        return Config::get('locale-routing.persist_locale.cookie', true);
+        return Config::get('localizer.persist_locale.cookie', true);
     }
 
     public function detectors(): array
     {
-        return Config::get('locale-routing.detectors', []);
+        return Config::get('localizer.detectors', []);
     }
 
     public function url(string $uri, ?string $locale = null): string

@@ -1,9 +1,9 @@
 <?php
 
-namespace NielsNumbers\LocaleRouting\Tests\Feature\Detectors;
+namespace NielsNumbers\LaravelLocalizer\Tests\Feature\Detectors;
 
 use Illuminate\Http\Request;
-use NielsNumbers\LocaleRouting\Detectors\BrowserDetector;
+use NielsNumbers\LaravelLocalizer\Detectors\BrowserDetector;
 use Orchestra\Testbench\TestCase;
 
 class BrowserDetectorTest extends TestCase

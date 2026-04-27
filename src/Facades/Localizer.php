@@ -1,6 +1,6 @@
 <?php
 
-namespace NielsNumbers\LocaleRouting\Facades;
+namespace NielsNumbers\LaravelLocalizer\Facades;
 
 use Illuminate\Support\Facades\Facade;
 
@@ -19,6 +19,6 @@ class Localizer extends Facade
 {
     protected static function getFacadeAccessor(): string
     {
-        return \NielsNumbers\LocaleRouting\Localizer::class;
+        return \NielsNumbers\LaravelLocalizer\Localizer::class;
     }
 }

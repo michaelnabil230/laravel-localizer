@@ -1,12 +1,12 @@
 <?php
 
-namespace NielsNumbers\LocaleRouting\Middleware;
+namespace NielsNumbers\LaravelLocalizer\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Config;
-use NielsNumbers\LocaleRouting\Localizer;
+use NielsNumbers\LaravelLocalizer\Localizer;
 use Symfony\Component\HttpFoundation\Response;
 
 class RedirectLocale
@@ -15,13 +15,13 @@ class RedirectLocale
 
     public function handle(Request $request, Closure $next): Response
     {
-        if (! Config::get('locale-routing.redirect_enabled', true)) {
+        if (! Config::get('localizer.redirect_enabled', true)) {
             return $next($request);
         }
 
         $locale = App::getLocale();
         $default = Config::get('app.fallback_locale');
-        $hideDefault = Config::get('locale-routing.hide_default_locale', true);
+        $hideDefault = Config::get('localizer.hide_default_locale', true);
 
         $path = ltrim($request->path(), '/');
         // We can't use $request->route('locale'): only LocalizeMacro routes

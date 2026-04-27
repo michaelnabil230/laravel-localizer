@@ -1,6 +1,6 @@
 <?php
 
-namespace NielsNumbers\LocaleRouting\Middleware;
+namespace NielsNumbers\LaravelLocalizer\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
@@ -9,8 +9,8 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\URL;
-use NielsNumbers\LocaleRouting\Contracts\DetectorInterface;
-use NielsNumbers\LocaleRouting\Localizer;
+use NielsNumbers\LaravelLocalizer\Contracts\DetectorInterface;
+use NielsNumbers\LaravelLocalizer\Localizer;
 
 class SetLocale
 {

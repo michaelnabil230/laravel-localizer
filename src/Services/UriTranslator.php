@@ -1,6 +1,6 @@
 <?php
 
-namespace NielsNumbers\LocaleRouting\Services;
+namespace NielsNumbers\LaravelLocalizer\Services;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Lang;

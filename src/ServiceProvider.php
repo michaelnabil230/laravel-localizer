@@ -1,22 +1,22 @@
 <?php
 
-namespace NielsNumbers\LocaleRouting;
+namespace NielsNumbers\LaravelLocalizer;
 
 use Illuminate\Contracts\Routing\UrlGenerator as UrlGeneratorContract;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Route;
-use NielsNumbers\LocaleRouting\Facades\Localizer as LocalizerFacade;
-use NielsNumbers\LocaleRouting\Illuminate\Routing\UrlGenerator;
-use NielsNumbers\LocaleRouting\Macros\LocalizeMacro;
-use NielsNumbers\LocaleRouting\Macros\TranslateMacro;
-use NielsNumbers\LocaleRouting\Services\UriTranslator;
+use NielsNumbers\LaravelLocalizer\Facades\Localizer as LocalizerFacade;
+use NielsNumbers\LaravelLocalizer\Illuminate\Routing\UrlGenerator;
+use NielsNumbers\LaravelLocalizer\Macros\LocalizeMacro;
+use NielsNumbers\LaravelLocalizer\Macros\TranslateMacro;
+use NielsNumbers\LaravelLocalizer\Services\UriTranslator;
 
 class ServiceProvider extends \Illuminate\Support\ServiceProvider
 {
     public function boot(): void
     {
         $this->publishes([
-            __DIR__.'/../config/locale-routing.php' => config_path('locale-routing.php'),
+            __DIR__.'/../config/localizer.php' => config_path('localizer.php'),
         ], 'config');
 
         $this->registerMacros();
@@ -25,7 +25,7 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
     public function register(): void
     {
         $this->app->singleton(Localizer::class, fn() => new Localizer(new UriTranslator()));
-        $this->mergeConfigFrom(__DIR__ . '/../config/locale-routing.php', 'locale-routing');
+        $this->mergeConfigFrom(__DIR__ . '/../config/localizer.php', 'localizer');
 
         $this->registerUrlGenerator();
     }

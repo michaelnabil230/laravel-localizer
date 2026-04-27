@@ -1,10 +1,10 @@
 <?php
 
-namespace NielsNumbers\LocaleRouting\Detectors;
+namespace NielsNumbers\LaravelLocalizer\Detectors;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use NielsNumbers\LocaleRouting\Contracts\DetectorInterface;
+use NielsNumbers\LaravelLocalizer\Contracts\DetectorInterface;
 
 class UserDetector implements DetectorInterface
 {

@@ -1,13 +1,13 @@
 <?php
 
-namespace NielsNumbers\LocaleRouting\Tests\Feature\Illuminate\Routing;
+namespace NielsNumbers\LaravelLocalizer\Tests\Feature\Illuminate\Routing;
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\App;
 use PHPUnit\Framework\Attributes\Test;
 use Orchestra\Testbench\TestCase;
-use NielsNumbers\LocaleRouting\ServiceProvider;
-use NielsNumbers\LocaleRouting\Illuminate\Routing\UrlGenerator as CustomUrlGenerator;
+use NielsNumbers\LaravelLocalizer\ServiceProvider;
+use NielsNumbers\LaravelLocalizer\Illuminate\Routing\UrlGenerator as CustomUrlGenerator;
 use Illuminate\Contracts\Routing\UrlGenerator as UrlGeneratorContract;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
 
@@ -32,7 +32,7 @@ class UrlGeneratorTest extends TestCase
     {
         // Route::get('/test', fn () => 'ok')->name('test');
 
-        /** @var \NielsNumbers\LocaleRouting\Illuminate\Routing\UrlGenerator $url */
+        /** @var \NielsNumbers\LaravelLocalizer\Illuminate\Routing\UrlGenerator $url */
         $url = app('url');
 
         $this->assertInstanceOf(CustomUrlGenerator::class, $url);
@@ -48,7 +48,7 @@ class UrlGeneratorTest extends TestCase
     {
         Route::get('/test', fn () => 'ok')->name('test');
 
-        /** @var \NielsNumbers\LocaleRouting\Illuminate\Routing\UrlGenerator $url */
+        /** @var \NielsNumbers\LaravelLocalizer\Illuminate\Routing\UrlGenerator $url */
         $url = app('url');
 
         $this->assertInstanceOf(CustomUrlGenerator::class, $url);
@@ -66,7 +66,7 @@ class UrlGeneratorTest extends TestCase
         Route::get('/{locale}/about', fn () => 'ok')->name('with_locale.about');
         Route::get('/about', fn () => 'ok')->name('without_locale.about');
 
-        /** @var \NielsNumbers\LocaleRouting\Illuminate\Routing\UrlGenerator $url */
+        /** @var \NielsNumbers\LaravelLocalizer\Illuminate\Routing\UrlGenerator $url */
         $url = app('url');
 
         $this->assertInstanceOf(CustomUrlGenerator::class, $url);
@@ -84,14 +84,14 @@ class UrlGeneratorTest extends TestCase
         config()->set('app.locale', 'en');
         app()->setLocale('en');
 
-        // Package config: simulate locale-routing.php values
-        config()->set('locale-routing.supported_locales', ['en', 'de']);
-        config()->set('locale-routing.hide_default_locale', true);
+        // Package config: simulate localizer.php values
+        config()->set('localizer.supported_locales', ['en', 'de']);
+        config()->set('localizer.hide_default_locale', true);
 
         Route::get('/{locale}/about', fn () => 'ok')->name('with_locale.about');
         Route::get('/about', fn () => 'ok')->name('without_locale.about');
 
-        /** @var \NielsNumbers\LocaleRouting\Illuminate\Routing\UrlGenerator $url */
+        /** @var \NielsNumbers\LaravelLocalizer\Illuminate\Routing\UrlGenerator $url */
         $url = app('url');
         $this->assertInstanceOf(CustomUrlGenerator::class, $url);
 
@@ -108,14 +108,14 @@ class UrlGeneratorTest extends TestCase
         config()->set('app.locale', 'en');
         app()->setLocale('en');
 
-        // Package config: simulate locale-routing.php values
-        config()->set('locale-routing.supported_locales', ['en', 'de']);
-        config()->set('locale-routing.hide_default_locale', true);
+        // Package config: simulate localizer.php values
+        config()->set('localizer.supported_locales', ['en', 'de']);
+        config()->set('localizer.hide_default_locale', true);
 
         Route::get('/{locale}/about', fn () => 'ok')->name('with_locale.about');
         Route::get('/about', fn () => 'ok')->name('without_locale.about');
 
-        /** @var \NielsNumbers\LocaleRouting\Illuminate\Routing\UrlGenerator $url */
+        /** @var \NielsNumbers\LaravelLocalizer\Illuminate\Routing\UrlGenerator $url */
         $url = app('url');
         $this->assertInstanceOf(CustomUrlGenerator::class, $url);
 
@@ -130,13 +130,13 @@ class UrlGeneratorTest extends TestCase
     {
         app()->setLocale('de');
 
-        config()->set('locale-routing.supported_locales', ['en', 'de']);
-        config()->set('locale-routing.hide_default_locale', true);
+        config()->set('localizer.supported_locales', ['en', 'de']);
+        config()->set('localizer.hide_default_locale', true);
 
         Route::get('/{locale}/about', fn () => 'ok')->name('with_locale.about');
         Route::get('/about', fn () => 'ok')->name('without_locale.about');
 
-        /** @var \NielsNumbers\LocaleRouting\Illuminate\Routing\UrlGenerator $url */
+        /** @var \NielsNumbers\LaravelLocalizer\Illuminate\Routing\UrlGenerator $url */
         $url = app('url');
         $this->assertInstanceOf(CustomUrlGenerator::class, $url);
 
@@ -152,13 +152,13 @@ class UrlGeneratorTest extends TestCase
     {
         app()->setLocale('de');
 
-        config()->set('locale-routing.supported_locales', ['en', 'de']);
-        config()->set('locale-routing.hide_default_locale', true);
+        config()->set('localizer.supported_locales', ['en', 'de']);
+        config()->set('localizer.hide_default_locale', true);
 
         Route::get('/{locale}/about', fn () => 'ok')->name('with_locale.about');
         Route::get('/about', fn () => 'ok')->name('without_locale.about');
 
-        /** @var \NielsNumbers\LocaleRouting\Illuminate\Routing\UrlGenerator $url */
+        /** @var \NielsNumbers\LaravelLocalizer\Illuminate\Routing\UrlGenerator $url */
         $url = app('url');
         $this->assertInstanceOf(CustomUrlGenerator::class, $url);
 
@@ -173,14 +173,14 @@ class UrlGeneratorTest extends TestCase
     {
         app()->setLocale('de');
 
-        config()->set('locale-routing.supported_locales', ['en', 'de']);
-        config()->set('locale-routing.hide_default_locale', true);
+        config()->set('localizer.supported_locales', ['en', 'de']);
+        config()->set('localizer.hide_default_locale', true);
 
         Route::get('/de/ueber', fn () => 'ok')->name('translated_de.about');
         Route::get('/en/about', fn () => 'ok')->name('translated_en.about');
         Route::get('/about', fn () => 'ok')->name('without_locale.about');
 
-        /** @var \NielsNumbers\LocaleRouting\Illuminate\Routing\UrlGenerator $url */
+        /** @var \NielsNumbers\LaravelLocalizer\Illuminate\Routing\UrlGenerator $url */
         $url = app('url');
         $this->assertInstanceOf(CustomUrlGenerator::class, $url);
 
@@ -194,14 +194,14 @@ class UrlGeneratorTest extends TestCase
     {
         app()->setLocale('de');
 
-        config()->set('locale-routing.supported_locales', ['en', 'de']);
-        config()->set('locale-routing.hide_default_locale', true);
+        config()->set('localizer.supported_locales', ['en', 'de']);
+        config()->set('localizer.hide_default_locale', true);
 
         Route::get('/de/ueber', fn () => 'ok')->name('translated_de.about');
         Route::get('/en/about', fn () => 'ok')->name('translated_en.about');
         Route::get('/about', fn () => 'ok')->name('without_locale.about');
 
-        /** @var \NielsNumbers\LocaleRouting\Illuminate\Routing\UrlGenerator $url */
+        /** @var \NielsNumbers\LaravelLocalizer\Illuminate\Routing\UrlGenerator $url */
         $url = app('url');
         $this->assertInstanceOf(CustomUrlGenerator::class, $url);
 
@@ -215,14 +215,14 @@ class UrlGeneratorTest extends TestCase
     {
         app()->setLocale('en');
 
-        config()->set('locale-routing.supported_locales', ['en', 'de']);
-        config()->set('locale-routing.hide_default_locale', true);
+        config()->set('localizer.supported_locales', ['en', 'de']);
+        config()->set('localizer.hide_default_locale', true);
 
         Route::get('/de/ueber', fn () => 'ok')->name('translated_de.about');
         Route::get('/en/about', fn () => 'ok')->name('translated_en.about');
         Route::get('/about', fn () => 'ok')->name('without_locale.about');
 
-        /** @var \NielsNumbers\LocaleRouting\Illuminate\Routing\UrlGenerator $url */
+        /** @var \NielsNumbers\LaravelLocalizer\Illuminate\Routing\UrlGenerator $url */
         $url = app('url');
         $this->assertInstanceOf(CustomUrlGenerator::class, $url);
 
@@ -236,14 +236,14 @@ class UrlGeneratorTest extends TestCase
     {
         app()->setLocale('en');
 
-        config()->set('locale-routing.supported_locales', ['en', 'de']);
-        config()->set('locale-routing.hide_default_locale', true);
+        config()->set('localizer.supported_locales', ['en', 'de']);
+        config()->set('localizer.hide_default_locale', true);
 
         Route::get('/de/ueber', fn () => 'ok')->name('translated_de.about');
         Route::get('/en/about', fn () => 'ok')->name('translated_en.about');
         Route::get('/about', fn () => 'ok')->name('without_locale.about');
 
-        /** @var \NielsNumbers\LocaleRouting\Illuminate\Routing\UrlGenerator $url */
+        /** @var \NielsNumbers\LaravelLocalizer\Illuminate\Routing\UrlGenerator $url */
         $url = app('url');
         $this->assertInstanceOf(CustomUrlGenerator::class, $url);
 
