@@ -61,8 +61,21 @@ It generated routes dynamically at runtime, making it incompatible with `php art
 
 ## Defining Routes
 
-Wrap your routes with `Route::localize()` to register them in both their prefixed
-(`/{locale}/about`) and unprefixed (`/about`) form:
+The package provides two route macros — pick the one that matches your URL
+strategy:
+
+| Macro | URLs look like | Use when |
+|---|---|---|
+| `Route::localize()` | `/about`, `/de/about`, `/fr/about` | The path is the same in every language; only the locale prefix differs. |
+| `Route::translate()` | `/about`, `/de/ueber`, `/fr/a-propos` | Each locale has its own translated path. |
+
+Both can be combined with chained route attributes:
+`Route::middleware('auth')->prefix('account')->localize(fn () => …)`.
+
+### Same path per locale — `Route::localize()`
+
+Wrap your routes with `Route::localize()` to register them in both their
+prefixed (`/{locale}/about`) and unprefixed (`/about`) form:
 
 ```php
 Route::localize(function () {
@@ -70,10 +83,53 @@ Route::localize(function () {
 });
 ```
 
-> **Important:** the closure passed to `Route::localize()` is executed **twice**
-> — once per route variant. Keep it side-effect-free: do not log, write to the
-> database, or trigger external calls inside it. Treat it as a pure route
+> **The closure runs twice** — once per route variant. Keep it side-effect-free:
+> no logging, no DB writes, no external calls. Treat it as a pure route
 > definition.
+
+### Translated paths per locale — `Route::translate()`
+
+For per-locale URL paths, use `Route::translate()` together with
+`Localizer::url()`, which looks up the localized URI from your language
+files:
+
+```php
+use NielsNumbers\LaravelLocalizer\Facades\Localizer;
+
+Route::translate(function () {
+    Route::get(Localizer::url('about'), AboutController::class)->name('about');
+});
+```
+
+Define the translations in `lang/{locale}/routes.php`:
+
+```php
+// lang/en/routes.php
+return [
+    'about' => 'about',
+];
+
+// lang/de/routes.php
+return [
+    'about' => 'ueber',
+];
+```
+
+This registers one route per supported locale (`/en/about`, `/de/ueber`),
+plus a no-prefix variant for the default locale when `hide_default_locale`
+is on. From your application code, keep using `route('about')` — the
+package selects the right URI.
+
+> **Lookup keys must match the full URI.** `routes.about` translates the
+> path `/about`. For nested paths use the full path as the key:
+> `'blog/post/{slug}' => 'artikel/{slug}'`. The translator does not split
+> paths into segments — that would cause unintended hits when the same
+> word appears in different contexts (e.g. `routes.about` translating
+> `/blog/about/team` → `/blog/ueber/team`).
+
+> **The closure runs N+1 times** — once per supported locale, plus an
+> additional time for the `without_locale.` variant when the locale is the
+> default and `hide_default_locale` is on. Same side-effect rules apply.
 
 ### URL Generation Is Context-Dependent
 
@@ -99,6 +155,61 @@ locale-aware *selection* between them happens at runtime in the URL generator,
 which is unaffected by the cache. URL-translated routes built by
 `Route::translate()` are likewise baked into static URIs at registration
 time, so the cache covers them too.
+
+## Template Helpers
+
+Three additional macros are available on the `Route` facade for use in
+controllers, Blade templates, and middleware.
+
+### `Route::localizedUrl($locale, $absolute = true)`
+
+Returns the **current** request's URL in another locale. Use it to build
+language switchers and `<link rel="alternate" hreflang="...">` tags:
+
+```blade
+@foreach (config('localizer.supported_locales') as $locale)
+    <link rel="alternate"
+          hreflang="{{ $locale }}"
+          href="{{ Route::localizedUrl($locale) }}" />
+@endforeach
+```
+
+The returned URL is the **canonical** form. Switching to the default locale
+with `hide_default_locale` enabled yields `/about` directly, not
+`/en/about` followed by a 301. Suitable for hreflang attributes that crawlers
+read literally.
+
+| Current route | Behavior |
+|---|---|
+| Named (recommended) | Resolved through `route()` — works for both macros. |
+| Unnamed `Route::localize()` | Falls back to a URI prefix swap on the request path. |
+| Unnamed `Route::translate()` | Throws `LogicException` — the translated URI can't be reversed. Add `->name()`. |
+| Called outside a request | Throws `LogicException`. |
+
+### `Route::hasLocalized($name)`
+
+Returns `true` if a route with the given name was registered through
+`Route::localize()` or `Route::translate()`:
+
+```blade
+@if (Route::hasLocalized('about'))
+    <a href="{{ route('about') }}">{{ __('About') }}</a>
+@endif
+```
+
+Checks `with_locale.{name}`, `without_locale.{name}` and
+`translated_{$locale}.{name}` for every supported locale.
+
+### `Route::isLocalized()`
+
+Returns `true` if the **current** request was matched to a localizer-managed
+route. Convenient for showing a language switcher only on localized pages:
+
+```blade
+@if (Route::isLocalized())
+    @include('partials.language-switcher')
+@endif
+```
 
 ## Configuration
 
@@ -275,6 +386,74 @@ class SendReminder implements ShouldQueue
 If your job's only job is to send a mail or notification, you don't need
 this trait — `Mail::to()->locale()` and `HasLocalePreference` already wrap
 the relevant code in `withLocale(...)` for you.
+
+## Caveats and Recipes
+
+### Route names must be unique across both macros
+
+Each route name should be defined **once**. Defining the same name through
+both `Route::localize()` and `Route::translate()` causes the second
+registration to silently overwrite the first's `without_locale.{name}`
+variant (Laravel's route registration is last-write-wins). Pick one macro
+per route and stick with it.
+
+### Empty `supported_locales` is a silent no-op
+
+If `config('localizer.supported_locales')` is empty, `Route::translate()`
+iterates zero locales, the closure never runs, and no routes get
+registered. There is no warning at boot — you'll discover it when
+`route('about')` raises `RouteNotFoundException` at request time. Make
+sure your config is in place before any service provider that defines
+translated routes runs.
+
+### Route Model Binding with translated slugs
+
+If your models have per-locale slugs and you want `/de/blog/{post:slug}` to
+resolve the German slug while `/en/blog/{post:slug}` resolves the English
+one, combine this package with
+[spatie/laravel-translatable](https://github.com/spatie/laravel-translatable)
+and override `resolveRouteBinding()`:
+
+```php
+use Illuminate\Database\Eloquent\Model;
+use Spatie\Translatable\HasTranslations;
+
+class Post extends Model
+{
+    use HasTranslations;
+
+    public $translatable = ['slug'];
+
+    public function resolveRouteBinding($value, $field = null)
+    {
+        $field = $field ?? $this->getRouteKeyName();
+
+        if ($field === 'slug') {
+            return $this->where("slug->" . app()->getLocale(), $value)->firstOrFail();
+        }
+
+        return parent::resolveRouteBinding($value, $field);
+    }
+}
+```
+
+Reading `app()->getLocale()` here is reliable: route model binding runs
+after the `SetLocale` middleware, so the recipient's locale is already in
+place.
+
+### Closures in `Route::translate()` / `Route::localize()` must be pure
+
+Already mentioned in [Defining Routes](#defining-routes), repeated here
+because it's the most common surprise:
+
+- `Route::localize()` — closure runs **twice** (one prefixed, one
+  unprefixed variant).
+- `Route::translate()` — closure runs **N+1 times** (one per supported
+  locale, plus once for `without_locale.` when the locale is the default
+  and `hide_default_locale` is on).
+
+Side effects inside the closure (logging, DB writes, third-party API
+calls) will execute that many times. Treat it as a pure route definition.
 
 ## Testing
 
