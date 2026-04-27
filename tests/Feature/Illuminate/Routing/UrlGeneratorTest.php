@@ -239,4 +239,16 @@ class UrlGeneratorTest extends TestCase
         $this->assertEquals('/about', $route);
     }
 
+    public function test_accepts_scalar_parameter_shortcut()
+    {
+        // Laravel allows route('show', 1) as a shortcut for route('show', [1]).
+        // Reading $parameters['locale'] on a scalar would emit a warning and
+        // crash under strict error handlers.
+        Route::get('/items/{id}', fn ($id) => $id)->name('items.show');
+
+        /** @var \NielsNumbers\LaravelLocalizer\Illuminate\Routing\UrlGenerator $url */
+        $url = app('url');
+
+        $this->assertSame('/items/42', $url->route('items.show', 42, false));
+    }
 }
