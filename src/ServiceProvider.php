@@ -17,7 +17,7 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
     {
         $this->publishes([
             __DIR__.'/../config/locale-routing.php' => config_path('locale-routing.php'),
-        ]);
+        ], 'config');
 
         $this->registerMacros();
     }
