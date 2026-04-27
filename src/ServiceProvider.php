@@ -10,6 +10,7 @@ use NielsNumbers\LaravelLocalizer\Facades\Localizer as LocalizerFacade;
 use NielsNumbers\LaravelLocalizer\Illuminate\Routing\UrlGenerator;
 use NielsNumbers\LaravelLocalizer\Macros\LocalizeMacro;
 use NielsNumbers\LaravelLocalizer\Macros\TranslateMacro;
+use NielsNumbers\LaravelLocalizer\Services\CurrentRouteLocalizer;
 use NielsNumbers\LaravelLocalizer\Services\UriTranslator;
 
 class ServiceProvider extends \Illuminate\Support\ServiceProvider
@@ -109,6 +110,10 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
             $this->group(function () use ($closure) {
                 app(TranslateMacro::class)->register($closure);
             });
+        });
+
+        Route::macro('localizedUrl', function (string $locale, bool $absolute = true) {
+            return app(CurrentRouteLocalizer::class)->localize($locale, $absolute);
         });
     }
 }

@@ -1,0 +1,129 @@
+<?php
+
+namespace NielsNumbers\LaravelLocalizer\Services;
+
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
+use Illuminate\Support\Traits\Localizable;
+use LogicException;
+use NielsNumbers\LaravelLocalizer\Localizer;
+
+/**
+ * Backs `Route::localizedUrl($locale)` — returns the current request's URL
+ * in another locale, suitable for language switchers and `<link rel="alternate">`
+ * tags.
+ *
+ * Resolution strategy:
+ *   1. The current route is named (recommended): use the base name and let the
+ *      package's UrlGenerator override pick the right variant for the new
+ *      locale. The call is wrapped in withLocale() so the override sees the
+ *      *target* locale and produces the canonical URL (no /en prefix when
+ *      English is the hidden default).
+ *   2. The current route was registered through Route::localize() but isn't
+ *      named: fall back to a URI prefix swap on the request path.
+ *   3. The current route was registered through Route::translate() but isn't
+ *      named: throw — the original lang-key is unrecoverable from the URI.
+ *   4. There's no current route (called outside an HTTP request): throw.
+ */
+class CurrentRouteLocalizer
+{
+    use Localizable;
+
+    public function __construct(
+        protected Localizer $localizer
+    ) {}
+
+    public function localize(string $locale, bool $absolute = true): string
+    {
+        $current = Route::current();
+
+        if ($current === null) {
+            throw new LogicException(
+                'Route::localizedUrl() requires an active matched route. '
+                .'Are you calling it outside an HTTP request?'
+            );
+        }
+
+        $name = $current->getName();
+        $baseName = $this->stripLocalizerPrefix($name);
+
+        return $this->withLocale($locale, function () use ($current, $name, $baseName, $locale, $absolute) {
+            if ($baseName !== '' && $baseName !== null) {
+                return $this->localizeNamedRoute($current, $name, $baseName, $locale, $absolute);
+            }
+
+            // Unnamed route. Use the LocalizeMacro's `locale_type` group
+            // attribute to decide whether a URI swap is safe — TranslateMacro
+            // routes don't carry it, so they fall through to the exception
+            // (URI was translated, original lang-key is unrecoverable).
+            if ($current->getAction('locale_type') !== null) {
+                return $this->swapUriPrefix(request(), $locale, $absolute);
+            }
+
+            throw new LogicException(
+                'Route::localizedUrl() cannot switch the locale of an unnamed translated route. '
+                .'Add ->name() inside Route::translate() so the helper can resolve the URL.'
+            );
+        });
+    }
+
+    protected function localizeNamedRoute($current, ?string $name, string $baseName, string $locale, bool $absolute): string
+    {
+        $parameters = $current->parameters();
+
+        // If the route is registered through one of our macros, override the
+        // {locale} parameter; for foreign-named routes (admin.dashboard etc.)
+        // we leave parameters alone so we don't append ?locale=xx as a stray
+        // query string.
+        if ($name !== null && $name !== $baseName) {
+            $parameters['locale'] = $locale;
+        }
+
+        return route($baseName, $parameters, $absolute);
+    }
+
+    protected function stripLocalizerPrefix(?string $name): ?string
+    {
+        if ($name === null) {
+            return null;
+        }
+
+        foreach (['with_locale.', 'without_locale.'] as $prefix) {
+            if (Str::startsWith($name, $prefix)) {
+                return Str::after($name, $prefix);
+            }
+        }
+
+        if (Str::startsWith($name, 'translated_')) {
+            // translated_de.about → 'about' (strip up to and including first '.')
+            return Str::after($name, '.');
+        }
+
+        return $name;
+    }
+
+    protected function swapUriPrefix(Request $request, string $newLocale, bool $absolute): string
+    {
+        $path = ltrim($request->path(), '/');
+        [$prefix, $rest] = array_pad(explode('/', $path, 2), 2, '');
+
+        $bare = $this->localizer->isSupported($prefix) ? $rest : $path;
+        $hide = $this->localizer->hideDefaultLocale();
+        $default = Config::get('app.fallback_locale');
+
+        $newPath = ($hide && $newLocale === $default)
+            ? $bare
+            : $newLocale . '/' . $bare;
+
+        $url = '/' . ltrim($newPath, '/');
+        $query = $request->getQueryString();
+
+        if ($query) {
+            $url .= '?' . $query;
+        }
+
+        return $absolute ? url($url) : $url;
+    }
+}
