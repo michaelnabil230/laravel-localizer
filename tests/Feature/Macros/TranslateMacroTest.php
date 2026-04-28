@@ -78,4 +78,18 @@ class TranslateMacroTest extends TestCase
             $this->assertContains('auth', $route->middleware());
         }
     }
+
+    public function test_translated_routes_carry_locale_action_attribute()
+    {
+        // SetLocale recovers the locale from this attribute for translated
+        // routes (no {locale} URL parameter to read).
+        Route::translate(function () {
+            Route::get('about', fn() => 'ok')->name('about');
+        });
+        Route::getRoutes()->refreshNameLookups();
+
+        $this->assertSame('en', Route::getRoutes()->getByName('translated_en.about')->getAction('locale'));
+        $this->assertSame('de', Route::getRoutes()->getByName('translated_de.about')->getAction('locale'));
+        $this->assertSame('en', Route::getRoutes()->getByName('without_locale.about')->getAction('locale'));
+    }
 }

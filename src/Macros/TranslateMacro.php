@@ -26,6 +26,12 @@ class TranslateMacro
      *   which reads App::getLocale() — hence the per-iteration withLocale)
      * - creates a "without locale" route for the fallback locale when
      *   hide_default_locale is on
+     *
+     * Each group sets a `locale` action attribute carrying the registered
+     * locale. Translated routes use literal prefixes (/de, /fr), so they
+     * carry no {locale} URL parameter; SetLocale reads getAction('locale')
+     * to recover the locale from the route — same pattern as locale_type
+     * in LocalizeMacro.
      */
     public function register(Closure $routes): void
     {
@@ -35,16 +41,21 @@ class TranslateMacro
 
         foreach ($supported as $locale) {
             $this->withLocale($locale, function () use ($routes, $locale, $default, $hide) {
-                Route::prefix($locale)
-                    ->name("translated_$locale.")
-                    ->group($routes);
+                Route::group([
+                    'prefix' => $locale,
+                    'as' => "translated_$locale.",
+                    'locale' => $locale,
+                ], $routes);
 
                 // For the default locale: register a no-prefix variant.
                 // The route name namespace ('without_locale.') prevents a
                 // collision with the LocalizeMacro's own without-locale
                 // routes.
                 if ($locale === $default && $hide) {
-                    Route::name('without_locale.')->group($routes);
+                    Route::group([
+                        'as' => 'without_locale.',
+                        'locale' => $locale,
+                    ], $routes);
                 }
             });
         }

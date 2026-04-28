@@ -41,6 +41,14 @@ class SetLocale
             return $routeLocale;
         }
 
+        // Translated routes carry a literal locale prefix (/de, /fr) and no
+        // {locale} URL parameter — TranslateMacro stores the locale in the
+        // route action so we can recover it here.
+        $actionLocale = $request->route()?->getAction('locale');
+        if ($this->localizer->isSupported($actionLocale)) {
+            return $actionLocale;
+        }
+
         if ($this->localizer->storesInSession()) {
             $sessionLocale = Session::get('locale');
             if ($this->localizer->isSupported($sessionLocale)) {
