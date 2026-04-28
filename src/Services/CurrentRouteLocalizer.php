@@ -35,7 +35,7 @@ class CurrentRouteLocalizer
         protected Localizer $localizer
     ) {}
 
-    public function localize(string $locale, bool $absolute = true): string
+    public function localize(string $locale, bool $absolute = true, bool $forcePrefix = false): string
     {
         $current = Route::current();
 
@@ -49,9 +49,9 @@ class CurrentRouteLocalizer
         $name = $current->getName();
         $baseName = $this->stripLocalizerPrefix($name);
 
-        return $this->withLocale($locale, function () use ($current, $name, $baseName, $locale, $absolute) {
+        return $this->withLocale($locale, function () use ($current, $name, $baseName, $locale, $absolute, $forcePrefix) {
             if ($baseName !== '' && $baseName !== null) {
-                return $this->localizeNamedRoute($current, $name, $baseName, $locale, $absolute);
+                return $this->localizeNamedRoute($current, $name, $baseName, $locale, $absolute, $forcePrefix);
             }
 
             // Unnamed route. Use the LocalizeMacro's `locale_type` group
@@ -59,7 +59,7 @@ class CurrentRouteLocalizer
             // routes don't carry it, so they fall through to the exception
             // (URI was translated, original lang-key is unrecoverable).
             if ($current->getAction('locale_type') !== null) {
-                return $this->swapUriPrefix(request(), $locale, $absolute);
+                return $this->swapUriPrefix(request(), $locale, $absolute, $forcePrefix);
             }
 
             throw new LogicException(
@@ -69,9 +69,33 @@ class CurrentRouteLocalizer
         });
     }
 
-    protected function localizeNamedRoute($current, ?string $name, string $baseName, string $locale, bool $absolute): string
+    protected function localizeNamedRoute($current, ?string $name, string $baseName, string $locale, bool $absolute, bool $forcePrefix = false): string
     {
         $parameters = $current->parameters();
+
+        // Force-prefix mode (language switcher): bypass the UrlGenerator's
+        // canonical-hiding branch by addressing the prefixed variant by name.
+        // Without this, route($baseName) would resolve to without_locale.* for
+        // target = default + hide_default, and the resulting unprefixed URL
+        // would carry no locale signal — SetLocale would fall back to session.
+        if ($forcePrefix) {
+            $withLocaleName = 'with_locale.'.$baseName;
+            if (Route::has($withLocaleName)) {
+                $parameters['locale'] = $locale;
+
+                return route($withLocaleName, $parameters, $absolute);
+            }
+
+            $translatedName = "translated_{$locale}.".$baseName;
+            if (Route::has($translatedName)) {
+                unset($parameters['locale']);
+
+                return route($translatedName, $parameters, $absolute);
+            }
+
+            // Foreign-named route — no localized variant exists, nothing to
+            // force. Fall through to the unforced behavior below.
+        }
 
         // If the route is registered through one of our macros, override the
         // {locale} parameter; for foreign-named routes (admin.dashboard etc.)
@@ -104,7 +128,7 @@ class CurrentRouteLocalizer
         return $name;
     }
 
-    protected function swapUriPrefix(Request $request, string $newLocale, bool $absolute): string
+    protected function swapUriPrefix(Request $request, string $newLocale, bool $absolute, bool $forcePrefix = false): string
     {
         $path = ltrim($request->path(), '/');
         [$prefix, $rest] = array_pad(explode('/', $path, 2), 2, '');
@@ -113,7 +137,7 @@ class CurrentRouteLocalizer
         $hide = $this->localizer->hideDefaultLocale();
         $default = Config::get('app.fallback_locale');
 
-        $newPath = ($hide && $newLocale === $default)
+        $newPath = (! $forcePrefix && $hide && $newLocale === $default)
             ? $bare
             : $newLocale . '/' . $bare;
 

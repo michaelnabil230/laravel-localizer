@@ -171,7 +171,9 @@ sitemaps:
 The returned URL is the **canonical** form. Switching to the default locale
 with `hide_default_locale` enabled yields `/about` directly, not
 `/en/about` followed by a 301. Suitable for hreflang attributes that crawlers
-read literally. For an in-page language switcher, see
+read literally. For an **in-page language switcher** use the sibling helper
+`Route::localizedSwitcherUrl($locale)` — it always emits the prefixed form,
+which is what carries the locale signal across the click. See
 [Language Switcher](#language-switcher).
 
 | Current route | Behavior |
@@ -363,10 +365,21 @@ See [Template Helpers](#template-helpers).
 ## Language Switcher
 
 Use a single switcher component anywhere in your layout. It picks the
-right URLs from `Route::localizedUrl()` so each link points to the
-**current page** in the target locale. Clicking a link triggers a
-normal navigation: the URL carries the new locale, `SetLocale` reads
-it on the next request and persists it to session/cookie.
+right URLs from **`Route::localizedSwitcherUrl()`** so each link points
+to the **current page** in the target locale. Clicking a link triggers a
+normal navigation: the URL carries the new locale, `SetLocale` reads it
+on the next request and persists it to session/cookie.
+
+> **Why a different helper than `localizedUrl()`?** `localizedUrl()`
+> returns the **canonical** URL (no `/en` prefix when English is the
+> hidden default) — correct for `<link rel="alternate">` and sitemaps.
+> But a switcher link to the default locale needs the prefix: it's the
+> only way the URL itself can tell `SetLocale` which language to switch
+> to. Without it, a stale session locale would win and `RedirectLocale`
+> would bounce the visitor back. `localizedSwitcherUrl()` always emits
+> the prefixed form; `RedirectLocale` then strips it on the follow-up
+> request, so the browser ends up on the canonical URL anyway — one
+> invisible 302 hop.
 
 ### Blade
 
@@ -375,7 +388,7 @@ Define once as a component, include anywhere:
 ```blade
 {{-- resources/views/components/language-switcher.blade.php --}}
 @foreach (config('localizer.supported_locales') as $locale)
-    <a href="{{ Route::localizedUrl($locale) }}"
+    <a href="{{ Route::localizedSwitcherUrl($locale) }}"
        @class(['active' => app()->getLocale() === $locale])>
         {{ strtoupper($locale) }}
     </a>
@@ -399,7 +412,7 @@ public function share(Request $request): array
     return array_merge(parent::share($request), [
         'locale'        => app()->getLocale(),
         'localizedUrls' => fn () => collect(config('localizer.supported_locales'))
-            ->mapWithKeys(fn ($l) => [$l => Route::localizedUrl($l)])
+            ->mapWithKeys(fn ($l) => [$l => Route::localizedSwitcherUrl($l)])
             ->all(),
     ]);
 }
@@ -460,8 +473,36 @@ This creates `config/localizer.php`.
 
 ## Detectors
 
-Detectors are only used when no locale is found in the URL, session, or cookie.
-Each detector class implements a simple interface that returns a locale string or `null`.
+### Locale Resolution Order
+
+`SetLocale` walks through the following sources, in order, and uses the
+first one that yields a supported locale:
+
+1. **URL** — the `{locale}` segment of a `with_locale.*` route (`/de/about` → `de`).
+2. **Session** — the locale stored on a previous request.
+3. **Cookie** — the locale persisted client-side.
+4. **Detectors** — see below (auth user preference, `Accept-Language`, custom).
+5. **`fallback_locale`** from `config/app.php`.
+
+Only the **URL** can override an existing session or cookie. If the URL
+carries no `{locale}` segment (the request came in as `/about` rather
+than `/de/about`), `SetLocale` keeps using the session/cookie value —
+that's deliberate, so a user who once picked German isn't reset to
+English every time they hit an unprefixed link, and `RedirectLocale`
+can send them to the prefixed variant.
+
+This is also the reason the language switcher uses
+`Route::localizedSwitcherUrl()` rather than `Route::localizedUrl()`:
+the switcher always emits the prefixed form (`/en/about`, even for the
+hidden default locale), so the URL itself flips the active locale on
+click. `RedirectLocale` then strips the prefix on the follow-up to
+restore the canonical form. See [Language Switcher](#language-switcher).
+
+### Available Detectors
+
+Detectors run only when steps 1–3 above produced nothing — typically a
+first visit with no session and no cookie. Each implements a simple
+interface that returns a locale string or `null`.
 
 By default, two detectors are provided:
 

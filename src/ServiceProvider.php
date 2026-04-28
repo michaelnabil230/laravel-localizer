@@ -116,6 +116,15 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
             return app(CurrentRouteLocalizer::class)->localize($locale, $absolute);
         });
 
+        // Like localizedUrl(), but always emits a prefixed URL — even for
+        // target = default-locale with hide_default_locale on. Use this for
+        // language switchers: the prefix carries the locale to SetLocale on
+        // the next request, and RedirectLocale strips it to the canonical
+        // form. localizedUrl() stays canonical for hreflang/sitemaps.
+        Route::macro('localizedSwitcherUrl', function (string $locale, bool $absolute = true) {
+            return app(CurrentRouteLocalizer::class)->localize($locale, $absolute, true);
+        });
+
         // Has any localized variant of this route name been registered?
         // Refresh the name lookups first — Laravel only rebuilds them lazily
         // during request matching, so fresh registrations aren't visible to

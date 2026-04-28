@@ -142,4 +142,97 @@ class LocalizedUrlTest extends TestCase
 
         Route::localizedUrl('de');
     }
+
+    public function test_switcher_url_keeps_prefix_for_default_locale()
+    {
+        Route::middleware(SetLocale::class)->group(function () {
+            Route::localize(function () {
+                Route::get('/about', fn () => Route::localizedSwitcherUrl('en', false))->name('about');
+            });
+        });
+
+        // Visiting /de/about and asking for the switcher URL to en (= default,
+        // hidden) must keep the /en prefix so the next request carries the
+        // locale signal to SetLocale.
+        $response = $this->get('/de/about');
+
+        $response->assertOk();
+        $response->assertSee('/en/about');
+    }
+
+    public function test_switcher_url_for_non_default_locale_matches_localized_url()
+    {
+        Route::middleware(SetLocale::class)->group(function () {
+            Route::localize(function () {
+                Route::get('/about', fn () => Route::localizedSwitcherUrl('de', false))->name('about');
+            });
+        });
+
+        // For non-default locales the URL is prefixed either way; switcher and
+        // canonical are identical.
+        $response = $this->get('/about');
+
+        $response->assertOk();
+        $response->assertSee('/de/about');
+    }
+
+    public function test_switcher_url_translate_route_uses_target_locale_uri()
+    {
+        Lang::addLines(['routes.about' => 'ueber'], 'de');
+        Lang::addLines(['routes.about' => 'about'], 'en');
+
+        Route::middleware(SetLocale::class)->group(function () {
+            Route::translate(function () {
+                Route::get(\NielsNumbers\LaravelLocalizer\Facades\Localizer::url('about'), function () {
+                    return Route::localizedSwitcherUrl('en', false);
+                })->name('about');
+            });
+        });
+
+        // From /de/ueber, the switcher URL to en (= default, hidden) must keep
+        // the /en prefix — same reason as the LocalizeMacro variant above.
+        $response = $this->get('/de/ueber');
+
+        $response->assertOk();
+        $response->assertSee('/en/about');
+    }
+
+    public function test_switcher_url_unnamed_localize_route_keeps_prefix_for_default()
+    {
+        Route::middleware(SetLocale::class)->group(function () {
+            Route::localize(function () {
+                Route::get('/about', fn () => Route::localizedSwitcherUrl('en', false));
+            });
+        });
+
+        $response = $this->get('/de/about');
+
+        $response->assertOk();
+        $response->assertSee('/en/about');
+    }
+
+    public function test_switcher_click_to_default_locale_overrides_stale_session()
+    {
+        // Real-world flow with both middlewares: a user browsing in DE has
+        // 'de' in their session. Clicking the switcher hits /en/about, which
+        // is the URL localizedSwitcherUrl('en') would emit from /de/about.
+        // Without the prefix in the URL, SetLocale would read 'de' from the
+        // session and RedirectLocale would bounce to /de/about — the bug
+        // localizedSwitcherUrl exists to prevent.
+        Config::set('localizer.persist_locale.session', true);
+
+        Route::middleware([SetLocale::class, \NielsNumbers\LaravelLocalizer\Middleware\RedirectLocale::class])
+            ->group(function () {
+                Route::localize(function () {
+                    Route::get('/about', fn () => app()->getLocale())->name('about');
+                });
+            });
+
+        $response = $this->withSession(['locale' => 'de'])->get('/en/about');
+
+        // /en/about → 302 to /about (RedirectLocale strips the default prefix);
+        // the en value is now in the session for the follow-up.
+        $response->assertRedirect('/about');
+        $this->assertSame('en', session('locale'));
+    }
 }
