@@ -746,6 +746,10 @@ UID=$(id -u) GID=$(id -g) docker compose run --rm test vendor/bin/phpunit
   (e.g. `en.index`, `de.index`, `es.index`). While this package follows a different routing strategy
   (two routes per definition: one with `{locale}` and one without), many classes and much of the
   implementation style are adapted from [laravel-localized-routes](https://github.com/codezero-be/laravel-localized-routes).
+- [@jordyvanderhaegen](https://github.com/jordyvanderhaegen): co-maintainer of
+  [laravel-localization](https://github.com/mcamara/laravel-localization);
+  his issue [mcamara/laravel-localization#921](https://github.com/mcamara/laravel-localization/issues/921)
+  was the motivation for writing this package.
 
 Since [@codezero-be](https://github.com/codezero-be) is no longer with us,
 I want to acknowledge his great work and influence on this package.
