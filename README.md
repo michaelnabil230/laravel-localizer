@@ -2,7 +2,7 @@
 
 [![Tests](https://github.com/niels-numbers/laravel-localizer/actions/workflows/tests.yml/badge.svg)](https://github.com/niels-numbers/laravel-localizer/actions/workflows/tests.yml)
 ![PHP](https://img.shields.io/badge/PHP-8.2%20%7C%208.3%20%7C%208.4-777BB4?logo=php&logoColor=white)
-![Laravel](https://img.shields.io/badge/Laravel-9%20%7C%2010%20%7C%2011%20%7C%2012-FF2D20?logo=laravel&logoColor=white)
+![Laravel](https://img.shields.io/badge/Laravel-9%20%7C%2010%20%7C%2011%20%7C%2012-blue?logo=laravel&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 Detect a visitor's preferred language and serve the right localized URL.
