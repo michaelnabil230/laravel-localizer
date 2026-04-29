@@ -5,21 +5,43 @@
 ![Laravel](https://img.shields.io/badge/Laravel-9%20%7C%2010%20%7C%2011%20%7C%2012-blue?logo=laravel&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-Detect a visitor's preferred language and serve the right localized URL.
-Optionally hide the default locale or translate URI paths, and keep
-using `route(...)` as usual, fully compatible with `php artisan
-route:cache`, with adapters available for Ziggy / Wayfinder.
+Purpose: Detect a visitor's preferred language and serve the right localized URL. 
+
+Description:
+
+Laravel ships with [localization](https://laravel.com/docs/localization) features. 
+It even has build-in support for  request-wide default values for certain URL parameters like `{locale}`,
+so you don't have to pass it to the `route` helper every single time.  However, if you want a truly multi-language
+app, a routing logic is missing, and this package is the adapter for this routing logic.
+
+To demonstrate this, lets consider the following example. Imagine you have a native multi-language Laravel app 
+with `/{locale}/about` as route. What route should a user of unknown language get? What would happen, if we go to
+`/about` without locale prefix? This is the gap, that the package is trying to fill.
+
+The behaviour that this package introduces is the following.
+
+1. Visiting `/about` the first time, then estimate users locale from browser or use fallback and redirect to the language, e.g. `/fr/about` and store langauge in session/cookie
+2. Visiting `/about` the second time, fetch locale from session and redirect to the language, e.g. `/fr/about`
+3. Make sure `route('about')` always maps to right locale route, avoiding redirects 
+4. You can enable to hide default locale in url, meaning `/en/about` becomes actually `/about`. Rule 1. and 2. still apply!
+
+In order to archive this, each route is registered twice, once with `{locale}` paramter and one route without. Each route will be named differently.
+However, you don't have to hustle with the two names of those routes, you can just ismply use `route('about')` - the package will take care of finding out
+which route to use.
+
+As an add-on, this packae also supports to have complete translated URI paths.
+It is fully compatible with `php artisan route:cache` and with adapters available for Ziggy / Wayfinder.
 
 ## Table of Contents
 
 - [Example](#example)
 - [Requirements](#requirements)
 - [Installation](#installation)
+- [Configuration](#configuration)
 - [Defining Routes](#defining-routes)
 - [Template Helpers](#template-helpers)
 - [JavaScript Route Helpers](#javascript-route-helpers)
 - [Language Switcher](#language-switcher)
-- [Configuration](#configuration)
 - [Detectors](#detectors)
 - [Redirects](#redirects)
 - [Locale in Jobs, Mailables and Notifications](#locale-in-jobs-mailables-and-notifications)
@@ -55,7 +77,14 @@ Under the hood, two static routes are registered per definition. `php artisan ro
 
 In your application code, `route('about')` always picks the right
 variant for the current request, both server-side and (with the
-[JS adapter](#javascript-route-helpers)) client-side.
+[JS adapter](#javascript-route-helpers)) client-side. 
+
+
+> You don't pass the locale to the `route` helper: 
+> the `SetLocale` middleware sets it as a default URL
+> parameter via Laravel's
+> [`URL::defaults()`](https://laravel.com/docs/urls#default-values),
+> so Laravel fills the `{locale}` placeholder automatically.
 
 When a visitor first lands on `example.com`, the package detects their
 browser language and redirects to the matching locale. The choice is
@@ -113,6 +142,30 @@ For Laravel 9 / 10, add both classes to the `web` group in
 `app/Http/Kernel.php`.
 
 **3. Wrap your routes** in `Route::localize()`. See [Defining Routes](#defining-routes).
+
+## Configuration
+
+Publish the config file with:
+
+```bash
+php artisan vendor:publish --provider="NielsNumbers\\LaravelLocalizer\\ServiceProvider" --tag=config
+```
+
+This creates `config/localizer.php`.
+
+| Key | Type | Default | Description |
+|-----|------|----------|--------------|
+| `supported_locales` | `array` | `[]` | List of all available locales. Example: `['en', 'de']`. |
+| `hide_default_locale` | `bool` | `true` | If `true`, URLs using the **default (fallback)** locale will be redirected to the version **without** a locale prefix. Example: `/en/about` → `/about`. |
+| `persist_locale.session` | `bool` | `true` | If `true`, the detected locale is stored in the session. |
+| `persist_locale.cookie` | `bool` | `true` | If `true`, the detected locale is stored in a browser cookie. |
+| `detectors` | `array` | `[UserDetector::class, BrowserDetector::class]` | Ordered list of classes used to detect a user's locale when no locale is found in the URL, session, or cookie. See [Detectors](#detectors). |
+| `redirect_enabled` | `bool` | `true` | Enables or disables automatic redirects between prefixed and unprefixed routes. See [Redirects](#redirects). |
+
+> The package's reference for the **default locale** is
+> `config('app.fallback_locale')` (in `config/app.php`), not a localizer
+> config of its own. It's the base for `hide_default_locale` and the
+> fallback language for missing translations.
 
 ## Defining Routes
 
@@ -202,6 +255,19 @@ read literally. For an **in-page language switcher** use the sibling helper
 `Route::localizedSwitcherUrl($locale)` — it always emits the prefixed form,
 which is what carries the locale signal across the click. See
 [Language Switcher](#language-switcher).
+
+> **Canonical (`/about`) vs. always-prefixed (`/en/about`) for hreflang:**
+> Google's official guidance is to point hreflang at canonical URLs, which
+> is what `localizedUrl()` returns — `/about` for the hidden default
+> locale, `/de/about` etc. for others. This is the normal recommendation.
+>
+> However, if a visitor with a non-default browser locale (or a stale
+> session/cookie) hits `/about`, `RedirectLocale` will 302 them to
+> `/de/about`. If you'd rather avoid any redirect roundtrip — at the cost
+> of having two URLs that resolve to English content (`/en/about` and
+> `/about`) — use `Route::localizedSwitcherUrl($locale)` in your hreflang
+> tags instead. That always emits the prefixed form, even for the default
+> locale.
 
 | Current route | Behavior |
 |---|---|
@@ -339,30 +405,6 @@ For routes with per-locale model bindings (translated slugs), some
 links may build URLs that 404 on follow. Render switcher items
 conditionally or add a fallback in `resolveRouteBinding()`.
 
-## Configuration
-
-Publish the config file with:
-
-```bash
-php artisan vendor:publish --provider="NielsNumbers\\LaravelLocalizer\\ServiceProvider" --tag=config
-```
-
-This creates `config/localizer.php`.
-
-| Key | Type | Default | Description |
-|-----|------|----------|--------------|
-| `supported_locales` | `array` | `[]` | List of all available locales. Example: `['en', 'de']`. |
-| `hide_default_locale` | `bool` | `true` | If `true`, URLs using the **default (fallback)** locale will be redirected to the version **without** a locale prefix. Example: `/en/about` → `/about`. |
-| `persist_locale.session` | `bool` | `true` | If `true`, the detected locale is stored in the session. |
-| `persist_locale.cookie` | `bool` | `true` | If `true`, the detected locale is stored in a browser cookie. |
-| `detectors` | `array` | `[UserDetector::class, BrowserDetector::class]` | Ordered list of classes used to detect a user's locale when no locale is found in the URL, session, or cookie. See [Detectors](#detectors). |
-| `redirect_enabled` | `bool` | `true` | Enables or disables automatic redirects between prefixed and unprefixed routes. See [Redirects](#redirects). |
-
-> The package's reference for the **default locale** is
-> `config('app.fallback_locale')` (in `config/app.php`), not a localizer
-> config of its own. It's the base for `hide_default_locale` and the
-> fallback language for missing translations.
-
 ## Detectors
 
 ### Locale Resolution Order
@@ -370,15 +412,21 @@ This creates `config/localizer.php`.
 `SetLocale` walks through the following sources, in order, and uses the
 first one that yields a supported locale:
 
-1. **URL** — the `{locale}` segment of a `with_locale.*` route (`/de/about` → `de`).
-2. **Session** — the locale stored on a previous request.
-3. **Cookie** — the locale persisted client-side.
-4. **Detectors** — see below (auth user preference, `Accept-Language`, custom).
-5. **`fallback_locale`** from `config/app.php`.
+1. **URL** — the `{locale}` segment of a `with_locale.*` route
+   (`/de/about` → `de`).
+2. **Route action** — the `locale` action attribute of the matched route.
+   `Route::translate()` registers per-locale routes with literal prefixes
+   (`/de/ueber`) and no `{locale}` parameter; the macro stores the locale
+   in the route action so `SetLocale` can recover it here.
+3. **Session** — the locale stored on a previous request.
+4. **Cookie** — the locale persisted client-side.
+5. **Detectors** — see below (auth user preference, `Accept-Language`, custom).
+6. **`fallback_locale`** from `config/app.php`.
 
-Only the **URL** can override an existing session or cookie. If the URL
-carries no `{locale}` segment (the request came in as `/about` rather
-than `/de/about`), `SetLocale` keeps using the session/cookie value —
+Only the **URL** and **route action** can override an existing session or
+cookie. If neither carries a locale signal (the request came in as `/about`
+rather than `/de/about` or `/de/ueber`), `SetLocale` keeps using the
+session/cookie value —
 that's deliberate, so a user who once picked German isn't reset to
 English every time they hit an unprefixed link, and `RedirectLocale`
 can send them to the prefixed variant.
@@ -659,14 +707,6 @@ You **don't** need it if you're fine with only:
 - `example.com/en/blog`
 
 and don't need `example.com/blog` or locale detection from the browser.
-
-> **Note:** with this package, requests to the unprefixed root (`example.com/`,
-> `example.com/blog`, etc.) are redirected to the detected locale's URL. There
-> is no canonical "no-locale" version of those pages — every page lives under
-> a locale, even if the prefix is hidden via `hide_default_locale`. If you
-> need a separate landing page that decides where to send the visitor (e.g.
-> a custom locale picker, or geo-IP routing of your own), build that
-> controller yourself outside `Route::localize()`.
 
 ## Restricting Active Locales (Multitenancy)
 
