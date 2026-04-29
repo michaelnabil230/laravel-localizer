@@ -26,6 +26,7 @@ route:cache`, with adapters available for Ziggy / Wayfinder.
 - [Translated URL Paths](#translated-url-paths)
 - [Caveats and Recipes](#caveats-and-recipes)
 - [When to use this package](#when-to-use-this-package)
+- [Restricting Active Locales (Multitenancy)](#restricting-active-locales-multitenancy) 
 - [Comparison to other packages](#comparison-to-other-packages)
 - [Background](#background)
 - [Testing](#testing)
@@ -666,6 +667,91 @@ and don't need `example.com/blog` or locale detection from the browser.
 > need a separate landing page that decides where to send the visitor (e.g.
 > a custom locale picker, or geo-IP routing of your own), build that
 > controller yourself outside `Route::localize()`.
+
+## Restricting Active Locales (Multitenancy)
+
+Two distinct concepts:
+
+- **Supported locales** (`config('localizer.supported_locales')`): the
+  static union, evaluated at boot time. Drives route registration —
+  every locale here gets a registered route variant. **Cannot change
+  per request** without breaking `route:cache` compatibility.
+- **Active locales** (runtime): the subset the user is allowed to reach
+  in the **current request**. Defaults to the supported set. Can be
+  narrowed at runtime via `Localizer::setActiveLocales([...])`.
+
+The classic use case: in a multi-tenant app, each tenant exposes a
+different subset of the globally supported locales. Tenant A allows
+`en + de`, Tenant B allows `en + fr + es`. Configure the union of both
+in `supported_locales`, then narrow per request in middleware.
+
+### Tenant middleware example
+
+```php
+// app/Http/Middleware/TenantLocales.php
+use Closure;
+use Illuminate\Http\Request;
+use NielsNumbers\LaravelLocalizer\Facades\Localizer;
+
+class TenantLocales
+{
+    public function handle(Request $request, Closure $next)
+    {
+        $tenant = $request->tenant(); // your resolver
+
+        Localizer::setActiveLocales($tenant->supported_locales);
+
+        try {
+            return $next($request);
+        } finally {
+            // Reset for long-running workers (Octane, queue workers).
+            // The Localizer is a container singleton; without reset
+            // the override leaks into the next request on the same
+            // worker process.
+            Localizer::setActiveLocales(null);
+        }
+    }
+}
+```
+
+### Middleware order
+
+`TenantLocales` must run **before** `SetLocale` so that `SetLocale`
+validates incoming locale candidates against the narrowed subset:
+
+```php
+->withMiddleware(function (Middleware $middleware) {
+    $middleware->web(append: [
+        \App\Http\Middleware\TenantLocales::class,
+        \NielsNumbers\LaravelLocalizer\Middleware\SetLocale::class,
+        \NielsNumbers\LaravelLocalizer\Middleware\RedirectLocale::class,
+    ]);
+})
+```
+
+### What changes vs. the default behavior
+
+- A request to a route for an inactive-but-supported locale (e.g. `/fr/about`
+  on Tenant A) is treated as if the prefix isn't a locale at all —
+  `SetLocale` falls back to the resolution chain (session → cookie →
+  detectors → fallback_locale), and `RedirectLocale` doesn't strip or
+  add the inactive prefix.
+- `Route::localizedSwitcherUrl()` and friends still iterate
+  `supportedLocales()`. If you build a switcher, filter against
+  `Localizer::activeLocales()` yourself when rendering.
+- `route('about')` resolves the same as before — the underlying
+  routes for inactive locales still exist physically; the package just
+  won't *route* the user there via locale detection.
+
+### API summary
+
+| Method | Purpose |
+|---|---|
+| `Localizer::supportedLocales()` | Static union from config (boot-time). |
+| `Localizer::activeLocales()` | Runtime subset; defaults to supported. |
+| `Localizer::isSupported($locale)` | Membership in supported. |
+| `Localizer::isActive($locale)` | Membership in active. |
+| `Localizer::setActiveLocales($array\|null)` | Narrow (or reset with `null`). | 
 
 ## Comparison to other packages
 

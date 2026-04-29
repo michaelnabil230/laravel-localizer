@@ -43,6 +43,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Locale propagation guidance for non-HTTP contexts (mailables,
   notifications, queued jobs) via `Mail::to()->locale()`,
   `HasLocalePreference`, and `Localizable::withLocale()`.
+- Runtime active-locales subset for multitenancy:
+  `Localizer::activeLocales()`, `isActive()`, `setActiveLocales(?array)`.
+  Narrow the user-reachable locales per request without breaking
+  `route:cache` (supported = static union; active = runtime subset).
 - Inertia + SPA language switcher guide (experimental) at
   `docs/inertia-spa-language-switch.md`.
 - CI matrix: PHP 8.2–8.4 × Laravel 9–12 (Testbench 7–10).

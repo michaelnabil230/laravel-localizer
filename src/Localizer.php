@@ -12,6 +12,14 @@ use NielsNumbers\LaravelLocalizer\Services\UriTranslator;
 
 class Localizer
 {
+    /**
+     * Runtime override for the active subset of supported locales.
+     * `null` means: active === supported (no override).
+     *
+     * @var array<int, string>|null
+     */
+    protected ?array $activeLocales = null;
+
     public function __construct(
         protected UriTranslator $translator
     ) {
@@ -25,6 +33,35 @@ class Localizer
     public function isSupported(?string $locale): bool
     {
         return $locale !== null && in_array($locale, $this->supportedLocales(), true);
+    }
+
+    /**
+     * Locales the user is allowed to reach in the current request.
+     * Defaults to `supportedLocales()`; can be narrowed at runtime via
+     * `setActiveLocales()` (e.g. per tenant in a multi-tenant app).
+     *
+     * @return array<int, string>
+     */
+    public function activeLocales(): array
+    {
+        return $this->activeLocales ?? $this->supportedLocales();
+    }
+
+    public function isActive(?string $locale): bool
+    {
+        return $locale !== null && in_array($locale, $this->activeLocales(), true);
+    }
+
+    /**
+     * Narrow the active locales for the current request. Pass `null` to
+     * reset to `supportedLocales()` — important in long-running workers
+     * (Octane, queue) where the Localizer singleton survives the request.
+     *
+     * @param  array<int, string>|null  $locales
+     */
+    public function setActiveLocales(?array $locales): void
+    {
+        $this->activeLocales = $locales;
     }
 
 

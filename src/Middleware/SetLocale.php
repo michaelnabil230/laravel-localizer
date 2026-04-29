@@ -37,7 +37,7 @@ class SetLocale
     protected function detectLocale(Request $request): ?string
     {
         $routeLocale = $request->route('locale');
-        if ($this->localizer->isSupported($routeLocale)) {
+        if ($this->localizer->isActive($routeLocale)) {
             return $routeLocale;
         }
 
@@ -45,20 +45,20 @@ class SetLocale
         // {locale} URL parameter — TranslateMacro stores the locale in the
         // route action so we can recover it here.
         $actionLocale = $request->route()?->getAction('locale');
-        if ($this->localizer->isSupported($actionLocale)) {
+        if ($this->localizer->isActive($actionLocale)) {
             return $actionLocale;
         }
 
         if ($this->localizer->storesInSession()) {
             $sessionLocale = Session::get('locale');
-            if ($this->localizer->isSupported($sessionLocale)) {
+            if ($this->localizer->isActive($sessionLocale)) {
                 return $sessionLocale;
             }
         }
 
         if ($this->localizer->storesInCookie()) {
             $cookieLocale = $request->cookie('locale');
-            if ($this->localizer->isSupported($cookieLocale)) {
+            if ($this->localizer->isActive($cookieLocale)) {
                 return $cookieLocale;
             }
         }
@@ -77,7 +77,7 @@ class SetLocale
             $result = $detector->detect($request);
 
             foreach ((array) $result as $candidate) {
-                if ($this->localizer->isSupported($candidate)) {
+                if ($this->localizer->isActive($candidate)) {
                     return $candidate;
                 }
             }

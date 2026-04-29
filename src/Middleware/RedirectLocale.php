@@ -34,7 +34,7 @@ class RedirectLocale
         // The first path segment counts as a locale only if it's whitelisted —
         // matching by regex would either miss multi-character tags (zh-CN, pt-BR)
         // or treat any two-letter prefix as a locale, redirecting nonsense paths.
-        $hasLocalePrefix = $this->localizer->isSupported($prefix);
+        $hasLocalePrefix = $this->localizer->isActive($prefix);
 
         // Locale prefix matches default + default should be hidden → strip it
         if ($hasLocalePrefix && $prefix === $default && $hideDefault) {
