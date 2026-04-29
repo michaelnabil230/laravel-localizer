@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-04-29
+
 ### Added
 
 - `Route::localize()` macro: registers each route twice (one with a
@@ -41,9 +43,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Locale propagation guidance for non-HTTP contexts (mailables,
   notifications, queued jobs) via `Mail::to()->locale()`,
   `HasLocalePreference`, and `Localizable::withLocale()`.
-- Support for chained route attributes: `Route::middleware(...)->prefix(...)->localize(...)`.
 - Inertia + SPA language switcher guide (experimental) at
   `docs/inertia-spa-language-switch.md`.
 - CI matrix: PHP 8.2–8.4 × Laravel 9–12 (Testbench 7–10).
 
-[Unreleased]: https://github.com/niels-numbers/laravel-localizer/commits/main
+[Unreleased]: https://github.com/niels-numbers/laravel-localizer/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/niels-numbers/laravel-localizer/releases/tag/v1.0.0
