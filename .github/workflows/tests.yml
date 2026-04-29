@@ -15,14 +15,20 @@ jobs:
         php: ['8.2', '8.3', '8.4']
         laravel: [9, 10, 11, 12]
         include:
+          # Laravel 9/10 are EOL for security fixes; all framework versions
+          # are flagged by Composer audit.
           - laravel: 9
             testbench: ^7.0
+            composer-flags: --no-audit
           - laravel: 10
             testbench: ^8.0
+            composer-flags: --no-audit
           - laravel: 11
             testbench: ^9.0
+            composer-flags: ''
           - laravel: 12
             testbench: ^10.0
+            composer-flags: ''
         exclude:
           - php: '8.4'
             laravel: 9
@@ -55,7 +61,7 @@ jobs:
           composer require --dev "orchestra/testbench:${{ matrix.testbench }}" --no-interaction --no-update
 
       - name: Install dependencies
-        run: composer update --prefer-dist --prefer-stable --no-interaction
+        run: composer update --prefer-dist --prefer-stable --no-interaction ${{ matrix.composer-flags }}
 
       - name: Run tests
         run: vendor/bin/phpunit
