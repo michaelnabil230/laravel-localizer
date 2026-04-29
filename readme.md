@@ -437,9 +437,14 @@ const { localizedUrls, locale } = usePage().props;
 
 A plain `<a>` triggers a full-page reload, which is typically what you
 want when switching languages: the HTML `lang` attribute, shared props
-and any cached translations all need to refresh. Inertia's `<Link>`
-works too if you prefer SPA navigation; Inertia re-fetches the new
-page with the new locale's shared props.
+and any cached translations all need to refresh.
+
+> **SPA language switch via `<Link>`** has a few extra moving parts (Ziggy as
+> a shared prop, `route()` reactive to `usePage()`, `<html lang>`
+> updates, prefixed switcher URLs). See
+> [docs/inertia-spa-language-switch.md](docs/inertia-spa-language-switch.md)
+> for a working sketch — marked **experimental**, not yet verified
+> end-to-end. Full reload remains the recommended default.
 
 ### Caveats
 
