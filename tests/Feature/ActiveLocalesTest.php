@@ -84,7 +84,7 @@ class ActiveLocalesTest extends TestCase
     public function test_set_locale_rejects_supported_but_inactive_route_locale()
     {
         // Tenant only allows en+de; user tries to reach /fr/about.
-        Route::middleware(SetLocale::class)->group(function () {
+        Route::group(['middleware' => SetLocale::class, 'locale_type' => 'with_locale'], function () {
             Route::get('/{locale}/about', fn($locale) => App::getLocale())
                 ->where('locale', 'en|de|fr')
                 ->name('about.locale');
@@ -102,7 +102,7 @@ class ActiveLocalesTest extends TestCase
 
     public function test_set_locale_accepts_active_route_locale()
     {
-        Route::middleware(SetLocale::class)->group(function () {
+        Route::group(['middleware' => SetLocale::class, 'locale_type' => 'with_locale'], function () {
             Route::get('/{locale}/about', fn($locale) => App::getLocale())
                 ->where('locale', 'en|de|fr')
                 ->name('about.locale');
@@ -124,7 +124,8 @@ class ActiveLocalesTest extends TestCase
         app(Localizer::class)->setActiveLocales(['en', 'de']);
         App::setLocale('en');
 
-        Route::middleware(RedirectLocale::class)->get('/fr/foo', fn() => 'reached');
+        Route::group(['middleware' => RedirectLocale::class, 'locale_type' => 'with_locale'],
+            fn() => Route::get('/fr/foo', fn() => 'reached'));
 
         $response = $this->get('/fr/foo');
         $response->assertOk();
@@ -138,8 +139,10 @@ class ActiveLocalesTest extends TestCase
         app(Localizer::class)->setActiveLocales(['en', 'de']);
         App::setLocale('en');
 
-        Route::middleware(RedirectLocale::class)->get('/{locale}/foo', fn() => 'foo');
-        Route::middleware(RedirectLocale::class)->get('/foo', fn() => 'foo');
+        Route::group(['middleware' => RedirectLocale::class, 'locale_type' => 'with_locale'], function () {
+            Route::get('/{locale}/foo', fn() => 'foo');
+            Route::get('/foo', fn() => 'foo');
+        });
 
         $response = $this->get('/en/foo');
         $response->assertRedirect('/foo');

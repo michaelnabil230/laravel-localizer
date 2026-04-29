@@ -46,6 +46,12 @@ class LifecycleTest extends TestCase
                 // (which RedirectLocale skips to preserve the request body).
                 Route::post('/save', fn () => app()->getLocale())->name('save');
             });
+
+            // Plain unlocalized route inside the same middleware group:
+            // both middlewares must skip it (no `locale_type` action).
+            // Reports the in-controller App locale so we can confirm
+            // SetLocale didn't touch it either.
+            Route::get('/admin', fn () => app()->getLocale())->name('admin');
         });
     }
 
@@ -144,5 +150,35 @@ class LifecycleTest extends TestCase
 
         $response->assertOk();
         $this->assertSame('de', $response->getContent());
+    }
+
+    public function test_unlocalized_route_inside_middleware_group_is_not_touched()
+    {
+        // Even though SetLocale + RedirectLocale sit on the route, /admin has
+        // no `locale_type` action attribute (it wasn't wrapped in
+        // Route::localize). Both middlewares must skip it: no redirect, no
+        // App::setLocale(). The handler sees the configured app.locale
+        // ('en' here), not anything browser-derived.
+        $response = $this->get('/admin', ['Accept-Language' => 'de-DE,de;q=0.9']);
+
+        $response->assertOk();
+        $this->assertSame('en', $response->getContent());
+    }
+
+    public function test_unlocalized_route_is_not_redirected_when_app_locale_is_non_default()
+    {
+        // RedirectLocale would normally rewrite /admin → /de/admin when the
+        // app locale is `de` (non-default + no prefix). For unlocalized
+        // routes we skip that — otherwise: 302 to a path that doesn't exist
+        // (no /de/admin route registered) → broken UX.
+        $this->app->setLocale('de');
+
+        $response = $this->get('/admin');
+
+        // Critical: 200, NOT 302. Body locale comes from the manually-set
+        // app locale ('de') because that's what the handler reads — but
+        // RedirectLocale didn't try to rewrite the URL.
+        $response->assertOk();
+        $this->assertNull($response->headers->get('Location'));
     }
 }

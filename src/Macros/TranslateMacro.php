@@ -45,6 +45,7 @@ class TranslateMacro
                     'prefix' => $locale,
                     'as' => "translated_$locale.",
                     'locale' => $locale,
+                    'locale_type' => 'translated',
                 ], $routes);
 
                 // For the default locale: register a no-prefix variant.
@@ -55,6 +56,14 @@ class TranslateMacro
                     Route::group([
                         'as' => 'without_locale.',
                         'locale' => $locale,
+                        // 'translated' (not 'without_locale'): the URI here
+                        // is locale-specific (e.g. /about for en, but the
+                        // route's German equivalent lives at /de/ueber, not
+                        // /de/about). CurrentRouteLocalizer must NOT do a
+                        // URI prefix swap for these — distinct from the
+                        // LocalizeMacro's without_locale routes where every
+                        // variant shares the same URI.
+                        'locale_type' => 'translated',
                     ], $routes);
                 }
             });

@@ -18,6 +18,15 @@ class SetLocale
 
     public function handle(Request $request, Closure $next): Response
     {
+        // Skip routes not registered through Route::localize() / Route::translate().
+        // The macros tag their groups with a `locale_type` action attribute;
+        // routes outside them have none, so we leave them untouched. Lets
+        // unlocalized routes (e.g. /admin, /api/health) coexist in the same
+        // middleware group without being forced into locale logic.
+        if ($request->route()?->getAction('locale_type') === null) {
+            return $next($request);
+        }
+
         $locale = $this->detectLocale($request) ?? config('app.fallback_locale');
 
         if ($this->localizer->storesInSession()) {

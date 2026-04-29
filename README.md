@@ -137,6 +137,14 @@ For Laravel 11+, in `bootstrap/app.php`:
 For Laravel 9 / 10, add both classes to the `web` group in
 `app/Http/Kernel.php`.
 
+> **Safe to mix with unlocalized routes.** Both middlewares only act on
+> routes registered through `Route::localize()` / `Route::translate()`
+> (detected via a `locale_type` action attribute the macros set). Plain
+> routes in the same `web` group — `/admin`, `/api/health`, anything
+> outside the macros — pass through untouched: no redirect, no
+> `App::setLocale()` side effect. See [Mixing localized and unlocalized
+> routes](#mixing-localized-and-unlocalized-routes).
+
 **3. Wrap your routes** in `Route::localize()`. See [Defining Routes](#defining-routes).
 
 ## Configuration
@@ -638,6 +646,43 @@ translated routes runs.
 - `config('app.locale')` is updated at runtime by the `SetLocale`
   middleware via `App::setLocale()`. Its initial value in
   `config/app.php` has no lasting effect once the middleware runs.
+
+### Mixing localized and unlocalized routes
+
+You can register routes outside `Route::localize()` / `Route::translate()`
+in the same middleware group — they won't be touched. Both `SetLocale`
+and `RedirectLocale` look for a `locale_type` action attribute on the
+matched route, which the macros set automatically; routes registered
+without the macros simply have no `locale_type` and pass through:
+
+```php
+$middleware->web(append: [SetLocale::class, RedirectLocale::class]);
+
+// In routes/web.php:
+Route::localize(function () {
+    Route::get('/about', AboutController::class)->name('about');
+});
+
+// Plain unlocalized route — no redirect, no App::setLocale() — works fine.
+Route::get('/admin', AdminController::class)->name('admin');
+```
+
+Without this, an authenticated user with `session.locale = de` hitting
+`/admin` would get a 302 to `/de/admin` (which doesn't exist → 404).
+Now `/admin` is reached directly.
+
+### Middleware order with translated route bindings
+
+If your localized routes use route model bindings with **per-locale slugs**
+(`/de/blog/{post:slug}` resolving a German slug, `/en/blog/{post:slug}` the
+English one — see recipe below), `SetLocale` must run **before** Laravel's
+`SubstituteBindings` middleware. Otherwise `resolveRouteBinding()` reads
+the fallback locale instead of the request's locale.
+
+The recommended setup (`web(append: [SetLocale, RedirectLocale])`) handles
+this automatically — both middlewares become part of the `web` group,
+which runs before `SubstituteBindings`. If you register them elsewhere
+(e.g. as global middleware after the routing pipeline), verify the order.
 
 ### Route Model Binding with translated slugs
 

@@ -19,6 +19,15 @@ class RedirectLocale
             return $next($request);
         }
 
+        // Skip routes not registered through Route::localize() / Route::translate().
+        // The macros tag their groups with a `locale_type` action attribute;
+        // routes outside them have none, so we don't touch them. This lets
+        // unlocalized routes (e.g. /admin, /api/health) coexist in the same
+        // middleware group without being redirected into a locale prefix.
+        if ($request->route()?->getAction('locale_type') === null) {
+            return $next($request);
+        }
+
         // Don't redirect non-safe methods. Browsers downgrade 302 from
         // POST/PUT/PATCH/DELETE to GET, dropping the request body — a
         // submitted form would silently lose its payload. The matched

@@ -54,11 +54,12 @@ class CurrentRouteLocalizer
                 return $this->localizeNamedRoute($current, $name, $baseName, $locale, $absolute, $forcePrefix);
             }
 
-            // Unnamed route. Use the LocalizeMacro's `locale_type` group
-            // attribute to decide whether a URI swap is safe — TranslateMacro
-            // routes don't carry it, so they fall through to the exception
-            // (URI was translated, original lang-key is unrecoverable).
-            if ($current->getAction('locale_type') !== null) {
+            // Unnamed route. URI prefix swap is only safe for LocalizeMacro
+            // routes (every variant shares the same path, only the prefix
+            // differs). TranslateMacro routes carry `locale_type = translated`
+            // and have locale-specific URIs (/about vs. /de/ueber) — no
+            // prefix swap can recover the original lang-key, so they throw.
+            if (in_array($current->getAction('locale_type'), ['with_locale', 'without_locale'], true)) {
                 return $this->swapUriPrefix(request(), $locale, $absolute, $forcePrefix);
             }
 

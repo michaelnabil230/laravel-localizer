@@ -22,10 +22,16 @@ class RedirectLocaleTest extends TestCase
 
         $this->app['config']->set('app.locale', 'en');
 
-        Route::middleware(RedirectLocale::class)
-            ->get('/{locale}/about', fn() => 'ok');
-        Route::middleware(RedirectLocale::class)
-            ->get('/about', fn() => 'ok');
+        // RedirectLocale skips routes without `locale_type` (so plain
+        // unlocalized routes coexist in the same middleware group).
+        // Tag these test routes — Route::localize() does this for free.
+        Route::group([
+            'middleware' => RedirectLocale::class,
+            'locale_type' => 'with_locale',
+        ], function () {
+            Route::get('/{locale}/about', fn() => 'ok');
+            Route::get('/about', fn() => 'ok');
+        });
 
         // Logs create permission conflicts in docker
         \Illuminate\Support\Facades\Log::swap(new \Illuminate\Log\Logger(
@@ -71,7 +77,8 @@ class RedirectLocaleTest extends TestCase
         App::setLocale('en');
         Config::set('localizer.hide_default_locale', true);
 
-        Route::middleware(RedirectLocale::class)->get('/xx/about', fn() => 'ok');
+        Route::group(['middleware' => RedirectLocale::class, 'locale_type' => 'with_locale'],
+            fn() => Route::get('/xx/about', fn() => 'ok'));
 
         $response = $this->get('/xx/about');
         $response->assertOk();
@@ -104,8 +111,10 @@ class RedirectLocaleTest extends TestCase
         App::setLocale('en');
         Config::set('localizer.hide_default_locale', true);
 
-        Route::middleware(RedirectLocale::class)->post('/{locale}/about', fn() => 'ok');
-        Route::middleware(RedirectLocale::class)->post('/about', fn() => 'ok');
+        Route::group(['middleware' => RedirectLocale::class, 'locale_type' => 'with_locale'], function () {
+            Route::post('/{locale}/about', fn() => 'ok');
+            Route::post('/about', fn() => 'ok');
+        });
 
         $response = $this->post('/en/about');
         $response->assertOk();
@@ -117,8 +126,10 @@ class RedirectLocaleTest extends TestCase
         App::setLocale('de');
         Config::set('localizer.hide_default_locale', true);
 
-        Route::middleware(RedirectLocale::class)->post('/{locale}/save', fn() => 'ok');
-        Route::middleware(RedirectLocale::class)->post('/save', fn() => 'ok');
+        Route::group(['middleware' => RedirectLocale::class, 'locale_type' => 'with_locale'], function () {
+            Route::post('/{locale}/save', fn() => 'ok');
+            Route::post('/save', fn() => 'ok');
+        });
 
         $response = $this->post('/save');
         $response->assertOk();
@@ -130,9 +141,11 @@ class RedirectLocaleTest extends TestCase
         App::setLocale('en');
         Config::set('localizer.hide_default_locale', true);
 
-        Route::middleware(RedirectLocale::class)->put('/{locale}/r', fn() => 'put');
-        Route::middleware(RedirectLocale::class)->patch('/{locale}/r', fn() => 'patch');
-        Route::middleware(RedirectLocale::class)->delete('/{locale}/r', fn() => 'delete');
+        Route::group(['middleware' => RedirectLocale::class, 'locale_type' => 'with_locale'], function () {
+            Route::put('/{locale}/r', fn() => 'put');
+            Route::patch('/{locale}/r', fn() => 'patch');
+            Route::delete('/{locale}/r', fn() => 'delete');
+        });
 
         $this->put('/en/r')->assertOk();
         $this->patch('/en/r')->assertOk();

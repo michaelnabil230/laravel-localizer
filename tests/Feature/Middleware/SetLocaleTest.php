@@ -40,7 +40,13 @@ class SetLocaleTest extends TestCase
 
     protected function defineRoutes($router)
     {
-        $router->middleware(SetLocale::class)->group(function () use ($router) {
+        // SetLocale skips routes without a `locale_type` action attribute
+        // (see middleware). Tag these test routes so the middleware engages
+        // — production routes get this for free via Route::localize().
+        $router->group([
+            'middleware' => SetLocale::class,
+            'locale_type' => 'with_locale',
+        ], function () use ($router) {
             $router->get('/{locale}/about', fn($locale) => $locale)->name('about.locale');
             $router->get('/about', fn() => response('about'))->name('about');
             $router->get('/{locale}', fn() => response('start'))->name('start.locale');
