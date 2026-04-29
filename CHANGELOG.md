@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.0.0] - 2026-04-29
+## [1.0.0] - 2026-04-30
 
 ### Added
 
@@ -49,6 +49,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `Localizer::activeLocales()`, `isActive()`, `setActiveLocales(?array)`.
   Narrow the user-reachable locales per request without breaking
   `route:cache` (supported = static union; active = runtime subset).
+- Mixed routes support: `SetLocale` and `RedirectLocale` skip routes
+  not registered through `Route::localize()` / `Route::translate()`,
+  detected via a `locale_type` action attribute the macros set. Plain
+  routes (e.g. `/admin`, `/api/health`) coexist safely in the same
+  `web` middleware group — no spurious redirects to non-existent
+  locale-prefixed paths.
 - Inertia + SPA language switcher guide (experimental) at
   `docs/inertia-spa-language-switch.md`.
 - CI matrix: PHP 8.2–8.4 × Laravel 9–12 (Testbench 7–10).
