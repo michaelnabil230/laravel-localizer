@@ -1,5 +1,10 @@
 # Laravel Localizer
 
+[![Tests](https://github.com/niels-numbers/laravel-localizer/actions/workflows/tests.yml/badge.svg)](https://github.com/niels-numbers/laravel-localizer/actions/workflows/tests.yml)
+![PHP](https://img.shields.io/badge/PHP-8.2%20%7C%208.3%20%7C%208.4-777BB4?logo=php&logoColor=white)
+![Laravel](https://img.shields.io/badge/Laravel-9%20%7C%2010%20%7C%2011%20%7C%2012-FF2D20?logo=laravel&logoColor=white)
+![License](https://img.shields.io/badge/license-MIT-green)
+
 Detect a visitor's preferred language and serve the right localized URL.
 Optionally hide the default locale or translate URI paths, and keep
 using `route(...)` as usual, fully compatible with `php artisan
@@ -8,6 +13,7 @@ route:cache`, with adapters available for Ziggy / Wayfinder.
 ## Table of Contents
 
 - [Example](#example)
+- [Requirements](#requirements)
 - [Installation](#installation)
 - [Defining Routes](#defining-routes)
 - [Template Helpers](#template-helpers)
@@ -46,6 +52,11 @@ variant for the current request, both server-side and (with the
 When a visitor first lands on `example.com`, the package detects their
 browser language and redirects to the matching locale. The choice is
 persisted in the session and a cookie for follow-up requests.
+
+## Requirements
+
+- **PHP** 8.2 / 8.3 / 8.4
+- **Laravel** 9, 10, 11, or 12
 
 ## Installation
 
