@@ -19,6 +19,10 @@
             "email": "info@adam-nielsen.de"
         }
     ],
+    "support": {
+        "issues": "https://github.com/niels-numbers/laravel-localizer/issues",
+        "source": "https://github.com/niels-numbers/laravel-localizer"
+    },
     "require": {
         "php": "^8.2",
         "codezero/browser-locale": "^3.0",
