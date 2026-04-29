@@ -11,8 +11,10 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Traits\Localizable;
 use NielsNumbers\LaravelLocalizer\ServiceProvider;
 use Orchestra\Testbench\TestCase;
@@ -66,6 +68,23 @@ class QueuedLocaleTest extends TestCase
     protected function defineDatabaseMigrations()
     {
         $this->loadLaravelMigrations();
+
+        // Testbench's `loadLaravelMigrations()` only runs the top-level
+        // migration directory; the `jobs` table migration lives in a
+        // `queue/` subfolder on testbench v9+ and is missing entirely on
+        // testbench v7/v8 (Laravel 9/10). Create it explicitly to keep
+        // queue tests cross-version.
+        if (! Schema::hasTable('jobs')) {
+            Schema::create('jobs', function (Blueprint $table) {
+                $table->bigIncrements('id');
+                $table->string('queue')->index();
+                $table->longText('payload');
+                $table->unsignedTinyInteger('attempts');
+                $table->unsignedInteger('reserved_at')->nullable();
+                $table->unsignedInteger('available_at');
+                $table->unsignedInteger('created_at');
+            });
+        }
     }
 
     protected function defineRoutes($router)
