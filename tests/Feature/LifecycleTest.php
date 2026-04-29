@@ -41,6 +41,10 @@ class LifecycleTest extends TestCase
             Route::localize(function () {
                 Route::get('/about', fn () => route('about', [], false))->name('about');
                 Route::get('/contact', fn () => route('about', ['locale' => 'en'], false))->name('contact');
+                // Echoes the in-controller App locale. Used to verify that
+                // SetLocale set the locale correctly even for non-safe methods
+                // (which RedirectLocale skips to preserve the request body).
+                Route::post('/save', fn () => app()->getLocale())->name('save');
             });
         });
     }
@@ -107,5 +111,38 @@ class LifecycleTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('ok');
+    }
+
+    public function test_post_to_localized_url_applies_locale_in_controller()
+    {
+        // Regression: RedirectLocale skips non-safe methods, so POST /de/save
+        // is NOT redirected. SetLocale must still set App::getLocale() to 'de'
+        // so anything inside the controller (mailables, translations, route())
+        // sees the right locale.
+        $response = $this->post('/de/save');
+
+        $response->assertOk();
+        $this->assertSame('de', $response->getContent());
+    }
+
+    public function test_post_to_default_locale_prefix_applies_default_locale()
+    {
+        // POST /en/save with hide_default_locale on: no redirect (non-safe
+        // method), but App::getLocale() must still be 'en' from the URL.
+        $response = $this->post('/en/save');
+
+        $response->assertOk();
+        $this->assertSame('en', $response->getContent());
+    }
+
+    public function test_post_to_unprefixed_url_uses_browser_locale()
+    {
+        // POST /save with no URL locale signal: SetLocale falls through to
+        // detectors. With Accept-Language: de, App::getLocale() must be 'de'
+        // even though RedirectLocale doesn't redirect to /de/save.
+        $response = $this->post('/save', [], ['Accept-Language' => 'de-DE,de;q=0.9']);
+
+        $response->assertOk();
+        $this->assertSame('de', $response->getContent());
     }
 }

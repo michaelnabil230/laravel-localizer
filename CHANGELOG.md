@@ -22,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   cookie → detector chain → `app.fallback_locale`.
 - `RedirectLocale` middleware: redirects between prefixed and unprefixed
   variants to enforce the canonical form, preserving query strings.
+  Skips non-safe methods (POST/PUT/PATCH/DELETE) to avoid losing the
+  request body via the 302 → GET browser downgrade.
 - Detector chain: `UserDetector` (reads from authenticated user) and
   `BrowserDetector` (`Accept-Language`); custom detectors via
   `localizer.detectors` config.

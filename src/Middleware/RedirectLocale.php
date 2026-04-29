@@ -19,6 +19,16 @@ class RedirectLocale
             return $next($request);
         }
 
+        // Don't redirect non-safe methods. Browsers downgrade 302 from
+        // POST/PUT/PATCH/DELETE to GET, dropping the request body — a
+        // submitted form would silently lose its payload. The matched
+        // route handler runs on whatever URL the client actually hit
+        // (with_locale or without_locale variant); both register the
+        // same controller, so behavior is identical bar the URL itself.
+        if (! $request->isMethodSafe()) {
+            return $next($request);
+        }
+
         $locale = App::getLocale();
         $default = Config::get('app.fallback_locale');
         $hideDefault = Config::get('localizer.hide_default_locale', true);

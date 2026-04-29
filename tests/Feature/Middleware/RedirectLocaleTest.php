@@ -97,6 +97,48 @@ class RedirectLocaleTest extends TestCase
         $response->assertRedirect('/about?ref=foo&utm_source=newsletter');
     }
 
+    public function test_post_to_default_prefix_does_not_redirect()
+    {
+        // A 302 from POST gets converted to GET by browsers, dropping the
+        // request body. Non-safe methods must reach the controller directly.
+        App::setLocale('en');
+        Config::set('localizer.hide_default_locale', true);
+
+        Route::middleware(RedirectLocale::class)->post('/{locale}/about', fn() => 'ok');
+        Route::middleware(RedirectLocale::class)->post('/about', fn() => 'ok');
+
+        $response = $this->post('/en/about');
+        $response->assertOk();
+        $this->assertSame('ok', $response->getContent());
+    }
+
+    public function test_post_to_unprefixed_with_non_default_locale_does_not_redirect()
+    {
+        App::setLocale('de');
+        Config::set('localizer.hide_default_locale', true);
+
+        Route::middleware(RedirectLocale::class)->post('/{locale}/save', fn() => 'ok');
+        Route::middleware(RedirectLocale::class)->post('/save', fn() => 'ok');
+
+        $response = $this->post('/save');
+        $response->assertOk();
+        $this->assertSame('ok', $response->getContent());
+    }
+
+    public function test_put_patch_delete_are_also_not_redirected()
+    {
+        App::setLocale('en');
+        Config::set('localizer.hide_default_locale', true);
+
+        Route::middleware(RedirectLocale::class)->put('/{locale}/r', fn() => 'put');
+        Route::middleware(RedirectLocale::class)->patch('/{locale}/r', fn() => 'patch');
+        Route::middleware(RedirectLocale::class)->delete('/{locale}/r', fn() => 'delete');
+
+        $this->put('/en/r')->assertOk();
+        $this->patch('/en/r')->assertOk();
+        $this->delete('/en/r')->assertOk();
+    }
+
     public function test_preserves_query_string_when_adding_prefix()
     {
         App::setLocale('de');
