@@ -37,10 +37,12 @@ class LocalizeMacroTest extends TestCase
         $this->assertTrue($routes->contains('without_locale.test'));
     }
 
-    public function test_chained_middleware_propagates_into_localized_routes()
+    public function test_inner_middleware_group_propagates_into_localized_routes()
     {
-        Route::middleware('auth')->localize(function () {
-            Route::get('/profile', fn () => 'ok')->name('profile');
+        Route::localize(function () {
+            Route::middleware('auth')->group(function () {
+                Route::get('/profile', fn () => 'ok')->name('profile');
+            });
         });
         Route::getRoutes()->refreshNameLookups();
 
@@ -53,15 +55,17 @@ class LocalizeMacroTest extends TestCase
         $this->assertContains('auth', $without->middleware());
     }
 
-    public function test_chained_prefix_propagates_into_localized_routes()
+    public function test_inner_prefix_group_propagates_into_localized_routes()
     {
-        Route::prefix('admin')->localize(function () {
-            Route::get('/dashboard', fn () => 'ok')->name('dashboard');
+        Route::localize(function () {
+            Route::prefix('admin')->group(function () {
+                Route::get('/dashboard', fn () => 'ok')->name('dashboard');
+            });
         });
         Route::getRoutes()->refreshNameLookups();
 
         $this->assertSame(
-            'admin/{locale}/dashboard',
+            '{locale}/admin/dashboard',
             Route::getRoutes()->getByName('with_locale.dashboard')->uri()
         );
         $this->assertSame(

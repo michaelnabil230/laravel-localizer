@@ -110,11 +110,19 @@ This generates `/about`, `/de/about`, `/fr/about` (etc.) from a single
 definition. In your application code, keep using `route('about')`; the
 package picks the right variant based on the current locale.
 
-Combine with the usual chained route attributes as you would in any
-route group:
+To attach middleware, prefixes, or other route attributes, define them
+**inside** the `Route::localize()` closure as you would in any other group —
+`Route::localize()` is itself a group, so nested groups compose the way
+Laravel groups normally compose:
 
 ```php
-Route::middleware('auth')->prefix('account')->localize(fn () => …);
+Route::localize(function () {
+    Route::get('/about', AboutController::class)->name('about');
+
+    Route::middleware('auth')->prefix('account')->group(function () {
+        Route::get('/profile', ProfileController::class)->name('profile');
+    });
+});
 ```
 
 > **The closure runs twice**, once per route variant. Keep it side-effect-free:

@@ -65,10 +65,12 @@ class TranslateMacroTest extends TestCase
             'App locale must be restored even when route registration throws.');
     }
 
-    public function test_chained_middleware_propagates_into_translated_routes()
+    public function test_inner_middleware_group_propagates_into_translated_routes()
     {
-        Route::middleware('auth')->translate(function () {
-            Route::get('about', fn() => 'ok')->name('about');
+        Route::translate(function () {
+            Route::middleware('auth')->group(function () {
+                Route::get('about', fn() => 'ok')->name('about');
+            });
         });
         Route::getRoutes()->refreshNameLookups();
 
