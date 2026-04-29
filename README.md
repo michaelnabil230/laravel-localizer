@@ -5,54 +5,30 @@
 ![Laravel](https://img.shields.io/badge/Laravel-9%20%7C%2010%20%7C%2011%20%7C%2012-blue?logo=laravel&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-Purpose: Detect a visitor's preferred language and serve the right localized URL. 
+Detect a visitor's preferred language and serve the right localized URL.
 
-Description:
+Laravel ships with [localization](https://laravel.com/docs/localization)
+features. But if you want a truly multi-language
+app, the *routing* layer is missing. This package fills that gap.
 
-Laravel ships with [localization](https://laravel.com/docs/localization) features. 
-It even has build-in support for  request-wide default values for certain URL parameters like `{locale}`,
-so you don't have to pass it to the `route` helper every single time.  However, if you want a truly multi-language
-app, a routing logic is missing, and this package is the adapter for this routing logic.
+Concretely: imagine you have routes like `/{locale}/about`. What should
+happen when a visitor lands on `/about` without a locale prefix? This
+package answers that:
 
-To demonstrate this, lets consider the following example. Imagine you have a native multi-language Laravel app 
-with `/{locale}/about` as route. What route should a user of unknown language get? What would happen, if we go to
-`/about` without locale prefix? This is the gap, that the package is trying to fill.
+1. **First visit to `/about`**: detect the visitor's language (browser
+   `Accept-Language` or fallback), redirect to e.g. `/fr/about`, and
+   persist the locale in session and cookie.
+2. **Subsequent visits to `/about`**: read the locale from session/cookie
+   and redirect to the matching `/fr/about`.
+3. **In your code**: `route('about')` always resolves to the correct
+   locale variant - no redirect roundtrip, no manual locale parameter.
+4. **Optionally hide the default locale**: `/en/about` becomes `/about`
+   for the default language; rules 1 and 2 still apply.
 
-The behaviour that this package introduces is the following.
-
-1. Visiting `/about` the first time, then estimate users locale from browser or use fallback and redirect to the language, e.g. `/fr/about` and store langauge in session/cookie
-2. Visiting `/about` the second time, fetch locale from session and redirect to the language, e.g. `/fr/about`
-3. Make sure `route('about')` always maps to right locale route, avoiding redirects 
-4. You can enable to hide default locale in url, meaning `/en/about` becomes actually `/about`. Rule 1. and 2. still apply!
-
-In order to archive this, each route is registered twice, once with `{locale}` paramter and one route without. Each route will be named differently.
-However, you don't have to hustle with the two names of those routes, you can just ismply use `route('about')` - the package will take care of finding out
-which route to use.
-
-As an add-on, this packae also supports to have complete translated URI paths.
-It is fully compatible with `php artisan route:cache` and with adapters available for Ziggy / Wayfinder.
-
-## Table of Contents
-
-- [Example](#example)
-- [Requirements](#requirements)
-- [Installation](#installation)
-- [Configuration](#configuration)
-- [Defining Routes](#defining-routes)
-- [Template Helpers](#template-helpers)
-- [JavaScript Route Helpers](#javascript-route-helpers)
-- [Language Switcher](#language-switcher)
-- [Detectors](#detectors)
-- [Redirects](#redirects)
-- [Locale in Jobs, Mailables and Notifications](#locale-in-jobs-mailables-and-notifications)
-- [Translated URL Paths](#translated-url-paths)
-- [Caveats and Recipes](#caveats-and-recipes)
-- [When to use this package](#when-to-use-this-package)
-- [Restricting Active Locales (Multitenancy)](#restricting-active-locales-multitenancy) 
-- [Comparison to other packages](#comparison-to-other-packages)
-- [Background](#background)
-- [Testing](#testing)
-- [Credits](#credits)
+As an add-on, this package also supports fully translated URI paths
+(`/de/ueber`, `/fr/a-propos`). It is fully compatible with
+`php artisan route:cache`, with adapters available for Ziggy and
+Wayfinder.
 
 ## Example
 
@@ -77,10 +53,9 @@ Under the hood, two static routes are registered per definition. `php artisan ro
 
 In your application code, `route('about')` always picks the right
 variant for the current request, both server-side and (with the
-[JS adapter](#javascript-route-helpers)) client-side. 
+[JS adapter](#javascript-route-helpers)) client-side.
 
-
-> You don't pass the locale to the `route` helper: 
+> You don't pass the locale to the `route` helper:
 > the `SetLocale` middleware sets it as a default URL
 > parameter via Laravel's
 > [`URL::defaults()`](https://laravel.com/docs/urls#default-values),
@@ -89,6 +64,27 @@ variant for the current request, both server-side and (with the
 When a visitor first lands on `example.com`, the package detects their
 browser language and redirects to the matching locale. The choice is
 persisted in the session and a cookie for follow-up requests.
+
+## Table of Contents
+
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Defining Routes](#defining-routes)
+- [Template Helpers](#template-helpers)
+- [JavaScript Route Helpers](#javascript-route-helpers)
+- [Language Switcher](#language-switcher)
+- [Detectors](#detectors)
+- [Redirects](#redirects)
+- [Locale in Jobs, Mailables and Notifications](#locale-in-jobs-mailables-and-notifications)
+- [Translated URL Paths](#translated-url-paths)
+- [Caveats and Recipes](#caveats-and-recipes)
+- [When to use this package](#when-to-use-this-package)
+- [Restricting Active Locales (Multitenancy)](#restricting-active-locales-multitenancy)
+- [Comparison to other packages](#comparison-to-other-packages)
+- [Background](#background)
+- [Testing](#testing)
+- [Credits](#credits)
 
 ## Requirements
 
@@ -183,7 +179,7 @@ definition. In your application code, keep using `route('about')`; the
 package picks the right variant based on the current locale.
 
 To attach middleware, prefixes, or other route attributes, define them
-**inside** the `Route::localize()` closure as you would in any other group —
+**inside** the `Route::localize()` closure as you would in any other group -
 `Route::localize()` is itself a group, so nested groups compose the way
 Laravel groups normally compose:
 
@@ -252,20 +248,20 @@ The returned URL is the **canonical** form. Switching to the default locale
 with `hide_default_locale` enabled yields `/about` directly, not
 `/en/about` followed by a 301. Suitable for hreflang attributes that crawlers
 read literally. For an **in-page language switcher** use the sibling helper
-`Route::localizedSwitcherUrl($locale)` — it always emits the prefixed form,
+`Route::localizedSwitcherUrl($locale)` - it always emits the prefixed form,
 which is what carries the locale signal across the click. See
 [Language Switcher](#language-switcher).
 
 > **Canonical (`/about`) vs. always-prefixed (`/en/about`) for hreflang:**
 > Google's official guidance is to point hreflang at canonical URLs, which
-> is what `localizedUrl()` returns — `/about` for the hidden default
+> is what `localizedUrl()` returns - `/about` for the hidden default
 > locale, `/de/about` etc. for others. This is the normal recommendation.
 >
 > However, if a visitor with a non-default browser locale (or a stale
 > session/cookie) hits `/about`, `RedirectLocale` will 302 them to
-> `/de/about`. If you'd rather avoid any redirect roundtrip — at the cost
+> `/de/about`. If you'd rather avoid any redirect roundtrip - at the cost
 > of having two URLs that resolve to English content (`/en/about` and
-> `/about`) — use `Route::localizedSwitcherUrl($locale)` in your hreflang
+> `/about`) - use `Route::localizedSwitcherUrl($locale)` in your hreflang
 > tags instead. That always emits the prefixed form, even for the default
 > locale.
 
@@ -308,7 +304,7 @@ and [Laravel Wayfinder](https://github.com/laravel/wayfinder) don't go
 through this package's `UrlGenerator` override; the locale-aware variant
 selection that `route('about')` does on the server doesn't happen in JS
 automatically. With a small adapter per stack you get the same DX as on
-the server — same applies for **Inertia.js**, which bundles one of these
+the server - same applies for **Inertia.js**, which bundles one of these
 two as its route helper.
 
 See [docs/javascript-route-helpers.md](docs/javascript-route-helpers.md)
@@ -325,13 +321,13 @@ on the next request and persists it to session/cookie.
 
 > **Why a different helper than `localizedUrl()`?** `localizedUrl()`
 > returns the **canonical** URL (no `/en` prefix when English is the
-> hidden default) — correct for `<link rel="alternate">` and sitemaps.
+> hidden default) - correct for `<link rel="alternate">` and sitemaps.
 > But a switcher link to the default locale needs the prefix: it's the
 > only way the URL itself can tell `SetLocale` which language to switch
 > to. Without it, a stale session locale would win and `RedirectLocale`
 > would bounce the visitor back. `localizedSwitcherUrl()` always emits
 > the prefixed form; `RedirectLocale` then strips it on the follow-up
-> request, so the browser ends up on the canonical URL anyway — one
+> request, so the browser ends up on the canonical URL anyway - one
 > invisible 302 hop.
 
 ### Blade
@@ -396,7 +392,7 @@ and any cached translations all need to refresh.
 > a shared prop, `route()` reactive to `usePage()`, `<html lang>`
 > updates, prefixed switcher URLs). See
 > [docs/inertia-spa-language-switch.md](docs/inertia-spa-language-switch.md)
-> for a working sketch — marked **experimental**, not yet verified
+> for a working sketch - marked **experimental**, not yet verified
 > end-to-end. Full reload remains the recommended default.
 
 ### Caveats
@@ -412,21 +408,21 @@ conditionally or add a fallback in `resolveRouteBinding()`.
 `SetLocale` walks through the following sources, in order, and uses the
 first one that yields a supported locale:
 
-1. **URL** — the `{locale}` segment of a `with_locale.*` route
+1. **URL** - the `{locale}` segment of a `with_locale.*` route
    (`/de/about` → `de`).
-2. **Route action** — the `locale` action attribute of the matched route.
+2. **Route action** - the `locale` action attribute of the matched route.
    `Route::translate()` registers per-locale routes with literal prefixes
    (`/de/ueber`) and no `{locale}` parameter; the macro stores the locale
    in the route action so `SetLocale` can recover it here.
-3. **Session** — the locale stored on a previous request.
-4. **Cookie** — the locale persisted client-side.
-5. **Detectors** — see below (auth user preference, `Accept-Language`, custom).
+3. **Session** - the locale stored on a previous request.
+4. **Cookie** - the locale persisted client-side.
+5. **Detectors** - see below (auth user preference, `Accept-Language`, custom).
 6. **`fallback_locale`** from `config/app.php`.
 
 Only the **URL** and **route action** can override an existing session or
 cookie. If neither carries a locale signal (the request came in as `/about`
 rather than `/de/about` or `/de/ueber`), `SetLocale` keeps using the
-session/cookie value —
+session/cookie value -
 that's deliberate, so a user who once picked German isn't reset to
 English every time they hit an unprefixed link, and `RedirectLocale`
 can send them to the prefixed variant.
@@ -440,7 +436,7 @@ restore the canonical form. See [Language Switcher](#language-switcher).
 
 ### Available Detectors
 
-Detectors run only when steps 1–3 above produced nothing — typically a
+Detectors run only when steps 1–3 above produced nothing - typically a
 first visit with no session and no cookie. Each implements a simple
 interface that returns a locale string or `null`.
 
@@ -713,7 +709,7 @@ and don't need `example.com/blog` or locale detection from the browser.
 Two distinct concepts:
 
 - **Supported locales** (`config('localizer.supported_locales')`): the
-  static union, evaluated at boot time. Drives route registration —
+  static union, evaluated at boot time. Drives route registration -
   every locale here gets a registered route variant. **Cannot change
   per request** without breaking `route:cache` compatibility.
 - **Active locales** (runtime): the subset the user is allowed to reach
@@ -772,14 +768,14 @@ validates incoming locale candidates against the narrowed subset:
 ### What changes vs. the default behavior
 
 - A request to a route for an inactive-but-supported locale (e.g. `/fr/about`
-  on Tenant A) is treated as if the prefix isn't a locale at all —
+  on Tenant A) is treated as if the prefix isn't a locale at all -
   `SetLocale` falls back to the resolution chain (session → cookie →
   detectors → fallback_locale), and `RedirectLocale` doesn't strip or
   add the inactive prefix.
 - `Route::localizedSwitcherUrl()` and friends still iterate
   `supportedLocales()`. If you build a switcher, filter against
   `Localizer::activeLocales()` yourself when rendering.
-- `route('about')` resolves the same as before — the underlying
+- `route('about')` resolves the same as before - the underlying
   routes for inactive locales still exist physically; the package just
   won't *route* the user there via locale detection.
 
