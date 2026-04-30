@@ -47,7 +47,10 @@ class SetLocaleTest extends TestCase
             'middleware' => SetLocale::class,
             'locale_type' => 'with_locale',
         ], function () use ($router) {
-            $router->get('/{locale}/about', fn($locale) => $locale)->name('about.locale');
+            // Closures take no positional args: SetLocale strips {locale} from
+            // the route parameter bag, so adding $locale here would now fail
+            // with ArgumentCountError. Tests assert App::getLocale() instead.
+            $router->get('/{locale}/about', fn() => response('about'))->name('about.locale');
             $router->get('/about', fn() => response('about'))->name('about');
             $router->get('/{locale}', fn() => response('start'))->name('start.locale');
             $router->get('/', fn() => response('start'))->name('start');
@@ -107,5 +110,25 @@ class SetLocaleTest extends TestCase
         $this->get('/about', ['Accept-Language' => 'fr-FR,fr;q=0.9']);
 
         $this->assertEquals('en', App::getLocale());
+    }
+
+    public function test_locale_is_not_leaked_to_controller_arguments()
+    {
+        Route::group([
+            'middleware' => SetLocale::class,
+            'locale_type' => 'with_locale',
+        ], function () {
+            Route::get('/{locale}/items/{country?}', fn ($country = null) => response()->json([
+                'country' => $country,
+            ]));
+        });
+
+        $this->get('/de/items')
+            ->assertOk()
+            ->assertExactJson(['country' => null]);
+
+        $this->get('/de/items/germany')
+            ->assertOk()
+            ->assertExactJson(['country' => 'germany']);
     }
 }

@@ -40,6 +40,14 @@ class SetLocale
         App::setLocale($locale);
         URL::defaults(['locale' => $locale]);
 
+        // Drop {locale} from the matched route's parameter bag. Laravel passes
+        // bound route parameters to the controller method positionally (in URI
+        // order), so leaving it in surprises every controller with an optional
+        // first argument — `index($country = null)` on /de/users would receive
+        // 'de' instead of null. App::getLocale() and URL::defaults() already
+        // carry the locale; the controller has no business consuming it again.
+        $request->route()?->forgetParameter('locale');
+
         return $next($request);
     }
 

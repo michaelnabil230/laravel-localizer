@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-04-30
+
+### Changed
+
+- `SetLocale` now strips `{locale}` from the matched route's parameter bag after resolving the locale. Laravel passes bound route parameters to controller methods positionally; leaving `{locale}` in the bag meant a controller like `index($country = null)` would receive `'de'` (the locale) instead of `null` on `/de/users`. The locale is still available via `App::getLocale()` and `URL::defaults()`. **Behaviour change**: anyone who declared `$locale` as the first controller argument as a workaround will now receive the actual first URI parameter — drop the `$locale` argument.
+
 ## [0.9.0] - 2026-04-30
 
 Initial public release. Architecture is stable; API may still see adjustments based on early-adopter feedback before 1.0.0.
@@ -32,5 +38,6 @@ Initial public release. Architecture is stable; API may still see adjustments ba
 - Inertia + SPA language switcher guide (experimental) at `docs/inertia-spa-language-switch.md`.
 - CI matrix: PHP 8.2–8.4 × Laravel 9–12 (Testbench 7–10).
 
-[Unreleased]: https://github.com/niels-numbers/laravel-localizer/compare/v0.9.0...HEAD
+[Unreleased]: https://github.com/niels-numbers/laravel-localizer/compare/v0.10.0...HEAD
+[0.10.0]: https://github.com/niels-numbers/laravel-localizer/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/niels-numbers/laravel-localizer/releases/tag/v0.9.0

@@ -85,7 +85,7 @@ class ActiveLocalesTest extends TestCase
     {
         // Tenant only allows en+de; user tries to reach /fr/about.
         Route::group(['middleware' => SetLocale::class, 'locale_type' => 'with_locale'], function () {
-            Route::get('/{locale}/about', fn($locale) => App::getLocale())
+            Route::get('/{locale}/about', fn() => App::getLocale())
                 ->where('locale', 'en|de|fr')
                 ->name('about.locale');
         });
@@ -103,7 +103,7 @@ class ActiveLocalesTest extends TestCase
     public function test_set_locale_accepts_active_route_locale()
     {
         Route::group(['middleware' => SetLocale::class, 'locale_type' => 'with_locale'], function () {
-            Route::get('/{locale}/about', fn($locale) => App::getLocale())
+            Route::get('/{locale}/about', fn() => App::getLocale())
                 ->where('locale', 'en|de|fr')
                 ->name('about.locale');
         });

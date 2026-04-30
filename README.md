@@ -671,6 +671,24 @@ Without this, an authenticated user with `session.locale = de` hitting
 `/admin` would get a 302 to `/de/admin` (which doesn't exist → 404).
 Now `/admin` is reached directly.
 
+### Don't add `$locale` as a controller argument
+
+The `{locale}` URI segment is consumed by `SetLocale` and stripped from
+the route parameter bag, so it is **not** passed positionally to your
+controller. Write your controllers as if the locale weren't in the URI:
+
+```php
+// Route::localize(fn() => Route::get('/users/{country?}', [UsersController::class, 'index']));
+
+// Correct:
+public function index(Request $request, ?string $country = null) { … }
+
+// Wrong — $locale will receive the country, not the locale:
+public function index(Request $request, string $locale, ?string $country = null) { … }
+```
+
+Read the active locale via `App::getLocale()` if you need it.
+
 ### Middleware order with translated route bindings
 
 If your localized routes use route model bindings with **per-locale slugs**
