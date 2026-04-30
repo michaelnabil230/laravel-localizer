@@ -862,7 +862,9 @@ validates incoming locale candidates against the narrowed subset:
   Laravel packages. In contrast, this package registers **two static
   routes** per definition (one with a `{locale}` placeholder and one
   without), making it fully cache-safe and compatible with most modern
-  Laravel packages.
+  Laravel packages. See
+  [docs/migrating-from-laravel-localization.md](docs/migrating-from-laravel-localization.md)
+  for a step-by-step migration guide.
 
 - **[codezero-be/laravel-localized-routes](https://github.com/codezero-be/laravel-localized-routes) (deprecated)**
   An alternative to *laravel-localization*, using a **route-per-locale**
