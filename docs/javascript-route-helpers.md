@@ -22,7 +22,17 @@ the server.
 The adapter subclasses Ziggy and rewrites the route manifest based on
 the current `App::getLocale()` and `hide_default_locale`. After it's
 installed, `route('about')` in JS resolves to the same URL that
-`route('about')` would on the server:
+`route('about')` would on the server.
+
+> **Two Ziggy packages, two install paths.** `tighten/ziggy` (v2+, the
+> current package) and `tightenco/ziggy` (v1, still common on apps
+> scaffolded with older Laravel installers) live in different namespaces
+> and wire up the manifest through different objects. Check which one
+> you have with `composer show | grep ziggy`, then follow the matching
+> subsection. The adapter logic is identical; only the namespace and the
+> binding differ.
+
+### The adapter (same logic for both versions)
 
 ```php
 // app/Routing/LocalizerZiggy.php
@@ -30,7 +40,11 @@ namespace App\Routing;
 
 use Illuminate\Support\Facades\App;
 use NielsNumbers\LaravelLocalizer\Facades\Localizer;
+
+// v2+ (tighten/ziggy):
 use Tighten\Ziggy\Ziggy;
+// v1  (tightenco/ziggy): comment out the line above and use:
+// use Tightenco\Ziggy\Ziggy;
 
 class LocalizerZiggy extends Ziggy
 {
@@ -75,15 +89,97 @@ class LocalizerZiggy extends Ziggy
 }
 ```
 
-Bind it in your `AppServiceProvider::register()`:
+### `tighten/ziggy` v2+ (container-bound)
+
+`BladeRouteGenerator` resolves Ziggy through the container, so a single
+bind in your `AppServiceProvider::register()` is enough:
 
 ```php
 $this->app->bind(\Tighten\Ziggy\Ziggy::class, \App\Routing\LocalizerZiggy::class);
 ```
 
-Now `@routes` in your Blade layout (or the Ziggy bridge that Inertia
-uses) emits the locale-aware manifest. `URL::defaults(['locale' => …])`
-is already set by the `SetLocale` middleware, so Ziggy fills in
+### `tightenco/ziggy` v1 (direct `new`, container bypassed)
+
+`Tightenco\Ziggy\BladeRouteGenerator::generate()` instantiates Ziggy
+with `new Ziggy($group)` directly, so binding `Ziggy::class` has **no
+effect** on `@routes` output. Applying the v2+ instructions to a v1
+install is a silent no-op: the manifest still ships with `with_locale.*`
+/ `without_locale.*` names and every JS `route('foo')` call fails with
+`Ziggy error: route 'foo' is not in the route list`.
+
+To make the adapter take effect, subclass `BladeRouteGenerator` and
+construct `LocalizerZiggy` inside it, then bind that:
+
+```php
+// app/Routing/LocalizerBladeRouteGenerator.php
+namespace App\Routing;
+
+use Tightenco\Ziggy\BladeRouteGenerator;
+use Tightenco\Ziggy\Output\MergeScript;
+use Tightenco\Ziggy\Output\Script;
+
+class LocalizerBladeRouteGenerator extends BladeRouteGenerator
+{
+    public function generate($group = null, $nonce = null)
+    {
+        $ziggy = new LocalizerZiggy($group);
+
+        $nonce = $nonce ? ' nonce="' . $nonce . '"' : '';
+
+        if (static::$generated) {
+            $output = config('ziggy.output.merge_script', MergeScript::class);
+            return (string) new $output($ziggy, $nonce);
+        }
+
+        $function = config('ziggy.skip-route-function')
+            ? ''
+            : file_get_contents(base_path('vendor/tightenco/ziggy/dist/index.js'));
+
+        static::$generated = true;
+
+        $output = config('ziggy.output.script', Script::class);
+
+        return (string) new $output($ziggy, $function, $nonce);
+    }
+}
+```
+
+```php
+// AppServiceProvider::register()
+$this->app->bind(
+    \Tightenco\Ziggy\BladeRouteGenerator::class,
+    \App\Routing\LocalizerBladeRouteGenerator::class,
+);
+```
+
+> The override duplicates the parent's `generate()` body because
+> `getRouteFunction()` and `generateMergeJavascript()` are `private` in
+> v1 and can't be reused via inheritance. If you'd rather not duplicate,
+> switching the app to `tighten/ziggy` v2 lets you go back to the
+> single-line bind from the v2+ section.
+
+### Verifying the adapter is wired up
+
+The v1 case fails silently — no error, just stale route names — so a
+quick check from `php artisan tinker` is worth it:
+
+```php
+// v2+: should print "App\Routing\LocalizerZiggy"
+get_class(app(\Tighten\Ziggy\Ziggy::class));
+
+// v1:  should print "App\Routing\LocalizerBladeRouteGenerator"
+get_class(app(\Tightenco\Ziggy\BladeRouteGenerator::class));
+```
+
+If you see the base class instead, the binding hasn't taken effect:
+clear `bootstrap/cache/services.php`, double-check the namespace
+(`Tighten` vs `Tightenco`), and re-run.
+
+### Locale defaults at runtime
+
+Once wired up, `@routes` in your Blade layout (or the Ziggy bridge that
+Inertia uses) emits the locale-aware manifest. `URL::defaults(['locale'
+=> …])` is set by the `SetLocale` middleware, so Ziggy fills in
 `{locale}` placeholders automatically:
 
 ```js
@@ -94,6 +190,14 @@ route('about', { locale: 'fr' }); // '/fr/about' (explicit override)
 // current locale = en (= default, hide_default_locale on)
 route('about');                   // '/about'
 ```
+
+> **Generating Ziggy from a console command?** `URL::defaults(['locale'
+> => …])` is only populated by `SetLocale` during an HTTP request, so
+> `php artisan ziggy:generate` (or any build-time manifest generation)
+> ships with bare `{locale}` placeholders and no default filled in. If
+> that's part of your build, wrap it in a custom artisan command that
+> calls `App::setLocale($locale)` before invoking the generator, once
+> per locale you want to ship.
 
 ## Wayfinder: `localizedRoute()` helper
 
