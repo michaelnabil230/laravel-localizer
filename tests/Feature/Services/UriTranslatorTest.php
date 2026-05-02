@@ -19,6 +19,8 @@ class UriTranslatorTest extends TestCase
         Lang::addLines([
             'routes.about' => 'ueber',
             'routes.blog/post/{slug}' => 'artikel/{slug}',
+            'routes.services/{type?}' => 'sluzby/{type?}',
+            'routes.shop/{category?}/{slug?}' => 'laden/{category?}/{slug?}',
         ], 'de');
     }
 
@@ -47,6 +49,26 @@ class UriTranslatorTest extends TestCase
         $this->assertSame(
             'blog/about/team',
             $this->translator->translate('blog/about/team', 'de')
+        );
+    }
+
+    public function test_translates_uri_with_optional_placeholder()
+    {
+        // mcamara/laravel-localization#933: optional `{type?}` segments broke
+        // because the upstream translator routed the path through parse_url(),
+        // which treats `?` as the start of the query string and chops the
+        // placeholder. Direct Lang lookup avoids that entirely.
+        $this->assertSame(
+            'sluzby/{type?}',
+            $this->translator->translate('services/{type?}', 'de')
+        );
+    }
+
+    public function test_translates_uri_with_multiple_optional_placeholders()
+    {
+        $this->assertSame(
+            'laden/{category?}/{slug?}',
+            $this->translator->translate('shop/{category?}/{slug?}', 'de')
         );
     }
 }
