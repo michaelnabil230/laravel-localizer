@@ -6,9 +6,12 @@
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 > **Official successor to [`mcamara/laravel-localization`](https://github.com/mcamara/laravel-localization).**
-> The original package is marked abandoned in Composer with this
-> package set as the replacement
-> ([mcamara/laravel-localization#955](https://github.com/mcamara/laravel-localization/pull/955)).
+> Built on static routes: `route:cache` works out of the box, fully
+> compatible with the wider Laravel ecosystem, and translated routes are
+> resolved through Laravel's own URL generator — no URI parsing required.
+> The original package remains actively maintained by
+> [@jordyvanderhaegen](https://github.com/jordyvanderhaegen) for Laravel/PHP
+> compatibility, security and small bug fixes.
 > Migrating? See [docs/migrating-from-laravel-localization.md](docs/migrating-from-laravel-localization.md)
 > - it covers the swap step by step and lists the long-standing
 > issues this rewrite addresses.
@@ -862,18 +865,18 @@ validates incoming locale candidates against the narrowed subset:
 
 ## Comparison to other packages
 
-- **[mcamara/laravel-localization](https://github.com/mcamara/laravel-localization) (deprecated)**
-  This package is the official successor to *laravel-localization*,
-  which is no longer maintained — `mcamara/laravel-localization` is
-  marked abandoned in Composer with `niels-numbers/laravel-localizer`
-  set as the replacement
-  ([mcamara/laravel-localization#955](https://github.com/mcamara/laravel-localization/pull/955)). The original package was the first to tackle
-  the routing problem; it generated routes dynamically at runtime,
-  making it incompatible with `php artisan route:cache` and several
-  Laravel packages. In contrast, this package registers **two static
-  routes** per definition (one with a `{locale}` placeholder and one
-  without), making it fully cache-safe and compatible with most modern
-  Laravel packages. See
+- **[mcamara/laravel-localization](https://github.com/mcamara/laravel-localization)**
+  The original package this one is the official successor to. It remains
+  actively maintained by
+  [@jordyvanderhaegen](https://github.com/jordyvanderhaegen) for
+  Laravel/PHP compatibility, security and small bug fixes. The original
+  was the first to tackle the routing problem; it generates routes
+  dynamically at runtime, which means `route:cache` doesn't work out of
+  the box and parts of the Laravel ecosystem aren't fully compatible —
+  several classes of long-standing bugs follow from that model. In
+  contrast, this package registers **two static routes** per definition
+  (one with a `{locale}` placeholder and one without), making it fully
+  cache-safe and compatible with most modern Laravel packages. See
   [docs/migrating-from-laravel-localization.md](docs/migrating-from-laravel-localization.md)
   for a step-by-step migration guide and the full list of long-standing
   issues this rewrite addresses.
@@ -892,11 +895,16 @@ validates incoming locale candidates against the narrowed subset:
 
 ## Background
 
-This package is the maintained continuation of [mcamara/laravel-localization](https://github.com/mcamara/laravel-localization).
-I (Adam Nielsen) was a collaborator on the original package, and since
-@mcamara has moved on from Laravel, I am now maintaining the route
-localization package. The original package from mcamara has a very long
-legacy.
+This package is the official successor to
+[mcamara/laravel-localization](https://github.com/mcamara/laravel-localization),
+which has a very long legacy in the Laravel ecosystem. I (Adam Nielsen)
+was a collaborator on the original package; since @mcamara has moved on
+from Laravel, [@jordyvanderhaegen](https://github.com/jordyvanderhaegen)
+continues to maintain it for Laravel/PHP compatibility, security and
+small bug fixes. This rewrite addresses the long-standing limitations
+that follow from the original's architecture — chiefly that `route:cache`
+doesn't work out of the box and parts of the Laravel ecosystem aren't
+fully compatible.
 
 The [original package](https://github.com/mcamara/laravel-localization)
 generated **dynamic routes**, which led to cache and compatibility
