@@ -39,7 +39,7 @@ class RedirectLocale
         }
 
         $locale = App::getLocale();
-        $default = Config::get('app.fallback_locale');
+        $default = $this->localizer->defaultLocale();
         $hideDefault = Config::get('localizer.hide_default_locale', true);
 
         $path = ltrim($request->path(), '/');

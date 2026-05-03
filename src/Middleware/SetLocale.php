@@ -27,7 +27,7 @@ class SetLocale
             return $next($request);
         }
 
-        $locale = $this->detectLocale($request) ?? config('app.fallback_locale');
+        $locale = $this->detectLocale($request) ?? $this->localizer->defaultLocale();
 
         if ($this->localizer->storesInSession()) {
             Session::put('locale', $locale);

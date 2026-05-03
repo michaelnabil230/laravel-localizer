@@ -7,6 +7,11 @@ use Illuminate\Support\Facades\Facade;
 /**
  * @method static array supportedLocales()
  * @method static bool isSupported(?string $locale)
+ * @method static array activeLocales()
+ * @method static bool isActive(?string $locale)
+ * @method static void setActiveLocales(?array $locales)
+ * @method static string defaultLocale()
+ * @method static void setActiveDefaultLocale(?string $locale)
  * @method static bool hideDefaultLocale()
  * @method static bool storesInSession()
  * @method static bool storesInCookie()

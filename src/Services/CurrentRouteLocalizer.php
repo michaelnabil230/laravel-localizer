@@ -136,7 +136,7 @@ class CurrentRouteLocalizer
 
         $bare = $this->localizer->isSupported($prefix) ? $rest : $path;
         $hide = $this->localizer->hideDefaultLocale();
-        $default = Config::get('app.fallback_locale');
+        $default = $this->localizer->defaultLocale();
 
         $newPath = (! $forcePrefix && $hide && $newLocale === $default)
             ? $bare

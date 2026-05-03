@@ -36,6 +36,11 @@ class TranslateMacro
     public function register(Closure $routes): void
     {
         $supported = Localizer::supportedLocales();
+        // Boot-time decision: which locale gets the without_locale.* variant
+        // is baked into the route registration and can't change per request.
+        // Read Config directly (not Localizer::defaultLocale()) to make it
+        // explicit that any per-request setActiveDefaultLocale() override is
+        // intentionally ignored here — see docs/multitenancy.md.
         $default = Config::get('app.fallback_locale');
         $hide = Localizer::hideDefaultLocale();
 

@@ -41,7 +41,7 @@ class UrlGenerator extends BaseUrlGenerator
     {
         $urlLocale = $parameters['locale'] ?? null;
         $appLocale = App::getLocale();
-        $defaultLocale = config('app.fallback_locale');
+        $defaultLocale = Localizer::defaultLocale();
         $hideDefault = Localizer::hideDefaultLocale();
         $locale = $urlLocale ?? $appLocale;
 
