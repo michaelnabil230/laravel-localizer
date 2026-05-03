@@ -78,24 +78,35 @@ persisted in the session and a cookie for follow-up requests.
 
 ## Table of Contents
 
-- [Requirements](#requirements)
-- [Installation](#installation)
-- [Configuration](#configuration)
-- [Defining Routes](#defining-routes)
-- [Template Helpers](#template-helpers)
-- [JavaScript Route Helpers](#javascript-route-helpers)
-- [Language Switcher](#language-switcher)
-- [Detectors](#detectors)
-- [Redirects](#redirects)
-- [Locale in Jobs, Mailables and Notifications](#locale-in-jobs-mailables-and-notifications)
-- [Translated URL Paths](#translated-url-paths)
-- [Caveats and Recipes](#caveats-and-recipes)
-- [When to use this package](#when-to-use-this-package)
-- [Restricting Active Locales (Multitenancy)](#restricting-active-locales-multitenancy)
-- [Comparison to other packages](#comparison-to-other-packages)
-- [Background](#background)
-- [Testing](#testing)
-- [Credits](#credits)
+**Getting Started**
+  - [Requirements](#requirements)
+  - [Installation](#installation)
+  - [Configuration](#configuration)
+
+**Defining Routes**
+  - [Defining Routes](#defining-routes)
+  - [Translated URL Paths](#translated-url-paths)
+
+**Rendering URLs**
+  - [Template Helpers](#template-helpers)
+  - [Language Switcher](#language-switcher)
+  - [JavaScript Route Helpers](#javascript-route-helpers)
+
+**Runtime Behavior**
+  - [Detectors](#detectors)
+  - [Redirects](#redirects)
+  - [Locale in Jobs, Mailables and Notifications](#locale-in-jobs-mailables-and-notifications)
+
+**Advanced**
+  - [Multitenancy](docs/multitenancy.md) — per-tenant locale subsets and default locale
+  - [Caveats and Recipes](docs/caveats-and-recipes.md) — edge cases, route-model-binding, middleware order
+
+**About**
+  - [When to use this package](#when-to-use-this-package)
+  - [Comparison to other packages](#comparison-to-other-packages)
+  - [Background](#background)
+  - [Testing](#testing)
+  - [Credits](#credits)
 
 ## Requirements
 
@@ -180,7 +191,10 @@ This creates `config/localizer.php`.
 > The package's reference for the **default locale** is
 > `config('app.fallback_locale')` (in `config/app.php`), not a localizer
 > config of its own. It's the base for `hide_default_locale` and the
-> fallback language for missing translations.
+> fallback language for missing translations. For multi-tenant apps where
+> the default varies per request, override it via
+> `Localizer::setActiveDefaultLocale()` — see
+> [docs/multitenancy.md](docs/multitenancy.md).
 
 ## Defining Routes
 
@@ -630,138 +644,6 @@ package selects the right URI.
 > the default and `hide_default_locale` is on. Same side-effect rules
 > apply as for `Route::localize()`.
 
-## Caveats and Recipes
-
-### Route names must be unique across both macros
-
-Each route name should be defined **once**. Defining the same name through
-both `Route::localize()` and `Route::translate()` causes the second
-registration to silently overwrite the first's `without_locale.{name}`
-variant (Laravel's route registration is last-write-wins). Pick one macro
-per route and stick with it.
-
-### Empty `supported_locales` is a silent no-op
-
-If `config('localizer.supported_locales')` is empty, `Route::translate()`
-iterates zero locales, the closure never runs, and no routes get
-registered. There is no warning at boot; you'll discover it when
-`route('about')` raises `RouteNotFoundException` at request time. Make
-sure your config is in place before any service provider that defines
-translated routes runs.
-
-### `app.locale` vs `app.fallback_locale`
-
-- `config('app.fallback_locale')` is the package's reference for the
-  default locale, used by `hide_default_locale` and as the base
-  language for missing translations. Set it in `config/app.php`.
-- `config('app.locale')` is updated at runtime by the `SetLocale`
-  middleware via `App::setLocale()`. Its initial value in
-  `config/app.php` has no lasting effect once the middleware runs.
-
-### Mixing localized and unlocalized routes
-
-You can register routes outside `Route::localize()` / `Route::translate()`
-in the same middleware group — they won't be touched. Both `SetLocale`
-and `RedirectLocale` look for a `locale_type` action attribute on the
-matched route, which the macros set automatically; routes registered
-without the macros simply have no `locale_type` and pass through:
-
-```php
-$middleware->web(append: [SetLocale::class, RedirectLocale::class]);
-
-// In routes/web.php:
-Route::localize(function () {
-    Route::get('/about', AboutController::class)->name('about');
-});
-
-// Plain unlocalized route — no redirect, no App::setLocale() — works fine.
-Route::get('/admin', AdminController::class)->name('admin');
-```
-
-Without this, an authenticated user with `session.locale = de` hitting
-`/admin` would get a 302 to `/de/admin` (which doesn't exist → 404).
-Now `/admin` is reached directly.
-
-### Don't add `$locale` as a controller argument
-
-The `{locale}` URI segment is consumed by `SetLocale` and stripped from
-the route parameter bag, so it is **not** passed positionally to your
-controller. Write your controllers as if the locale weren't in the URI:
-
-```php
-// Route::localize(fn() => Route::get('/users/{country?}', [UsersController::class, 'index']));
-
-// Correct:
-public function index(Request $request, ?string $country = null) { … }
-
-// Wrong — $locale will receive the country, not the locale:
-public function index(Request $request, string $locale, ?string $country = null) { … }
-```
-
-Read the active locale via `App::getLocale()` if you need it.
-
-### Middleware order with translated route bindings
-
-If your localized routes use route model bindings with **per-locale slugs**
-(`/de/blog/{post:slug}` resolving a German slug, `/en/blog/{post:slug}` the
-English one — see recipe below), `SetLocale` must run **before** Laravel's
-`SubstituteBindings` middleware. Otherwise `resolveRouteBinding()` reads
-the fallback locale instead of the request's locale.
-
-The recommended setup (`web(append: [SetLocale, RedirectLocale])`) handles
-this automatically — both middlewares become part of the `web` group,
-which runs before `SubstituteBindings`. If you register them elsewhere
-(e.g. as global middleware after the routing pipeline), verify the order.
-
-### Route Model Binding with translated slugs
-
-If your models have per-locale slugs and you want `/de/blog/{post:slug}` to
-resolve the German slug while `/en/blog/{post:slug}` resolves the English
-one, combine this package with
-[spatie/laravel-translatable](https://github.com/spatie/laravel-translatable)
-and override `resolveRouteBinding()`:
-
-```php
-use Illuminate\Database\Eloquent\Model;
-use Spatie\Translatable\HasTranslations;
-
-class Post extends Model
-{
-    use HasTranslations;
-
-    public $translatable = ['slug'];
-
-    public function resolveRouteBinding($value, $field = null)
-    {
-        $field = $field ?? $this->getRouteKeyName();
-
-        if ($field === 'slug') {
-            return $this->where("slug->" . app()->getLocale(), $value)->firstOrFail();
-        }
-
-        return parent::resolveRouteBinding($value, $field);
-    }
-}
-```
-
-Reading `app()->getLocale()` here is reliable: route model binding runs
-after the `SetLocale` middleware, so the recipient's locale is already in
-place.
-
-### Closures in `Route::translate()` / `Route::localize()` must be pure
-
-Already mentioned in [Defining Routes](#defining-routes), repeated here
-because it's the most common surprise:
-
-- `Route::localize()`: closure runs **twice** (one prefixed, one
-  unprefixed variant).
-- `Route::translate()`: closure runs **N+1 times** (one per supported
-  locale, plus once for `without_locale.` when the locale is the default
-  and `hide_default_locale` is on).
-
-Side effects inside the closure (logging, DB writes, third-party API
-calls) will execute that many times. Treat it as a pure route definition.
-
 ## When to use this package
 
 Use this package if you want:
@@ -777,91 +659,6 @@ You **don't** need it if you're fine with only:
 - `example.com/en/blog`
 
 and don't need `example.com/blog` or locale detection from the browser.
-
-## Restricting Active Locales (Multitenancy)
-
-Two distinct concepts:
-
-- **Supported locales** (`config('localizer.supported_locales')`): the
-  static union, evaluated at boot time. Drives route registration -
-  every locale here gets a registered route variant. **Cannot change
-  per request** without breaking `route:cache` compatibility.
-- **Active locales** (runtime): the subset the user is allowed to reach
-  in the **current request**. Defaults to the supported set. Can be
-  narrowed at runtime via `Localizer::setActiveLocales([...])`.
-
-The classic use case: in a multi-tenant app, each tenant exposes a
-different subset of the globally supported locales. Tenant A allows
-`en + de`, Tenant B allows `en + fr + es`. Configure the union of both
-in `supported_locales`, then narrow per request in middleware.
-
-### Tenant middleware example
-
-```php
-// app/Http/Middleware/TenantLocales.php
-use Closure;
-use Illuminate\Http\Request;
-use NielsNumbers\LaravelLocalizer\Facades\Localizer;
-
-class TenantLocales
-{
-    public function handle(Request $request, Closure $next)
-    {
-        $tenant = $request->tenant(); // your resolver
-
-        Localizer::setActiveLocales($tenant->supported_locales);
-
-        try {
-            return $next($request);
-        } finally {
-            // Reset for long-running workers (Octane, queue workers).
-            // The Localizer is a container singleton; without reset
-            // the override leaks into the next request on the same
-            // worker process.
-            Localizer::setActiveLocales(null);
-        }
-    }
-}
-```
-
-### Middleware order
-
-`TenantLocales` must run **before** `SetLocale` so that `SetLocale`
-validates incoming locale candidates against the narrowed subset:
-
-```php
-->withMiddleware(function (Middleware $middleware) {
-    $middleware->web(append: [
-        \App\Http\Middleware\TenantLocales::class,
-        \NielsNumbers\LaravelLocalizer\Middleware\SetLocale::class,
-        \NielsNumbers\LaravelLocalizer\Middleware\RedirectLocale::class,
-    ]);
-})
-```
-
-### What changes vs. the default behavior
-
-- A request to a route for an inactive-but-supported locale (e.g. `/fr/about`
-  on Tenant A) is treated as if the prefix isn't a locale at all -
-  `SetLocale` falls back to the resolution chain (session → cookie →
-  detectors → fallback_locale), and `RedirectLocale` doesn't strip or
-  add the inactive prefix.
-- `Route::localizedSwitcherUrl()` and friends still iterate
-  `supportedLocales()`. If you build a switcher, filter against
-  `Localizer::activeLocales()` yourself when rendering.
-- `route('about')` resolves the same as before - the underlying
-  routes for inactive locales still exist physically; the package just
-  won't *route* the user there via locale detection.
-
-### API summary
-
-| Method | Purpose |
-|---|---|
-| `Localizer::supportedLocales()` | Static union from config (boot-time). |
-| `Localizer::activeLocales()` | Runtime subset; defaults to supported. |
-| `Localizer::isSupported($locale)` | Membership in supported. |
-| `Localizer::isActive($locale)` | Membership in active. |
-| `Localizer::setActiveLocales($array\|null)` | Narrow (or reset with `null`). | 
 
 ## Comparison to other packages
 
