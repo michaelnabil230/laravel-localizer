@@ -3,7 +3,7 @@
 Two distinct concepts at play in a multi-tenant app:
 
 - **Supported locales** (`config('localizer.supported_locales')`): the
-  static union, evaluated at boot time. Drives route registration —
+  static union, evaluated at boot time. Drives route registration -
   every locale here gets a registered route variant. **Cannot change
   per request** without breaking `route:cache` compatibility.
 - **Active locales** (runtime): the subset the user is allowed to reach
@@ -15,7 +15,7 @@ Two distinct concepts at play in a multi-tenant app:
   `Localizer::setActiveDefaultLocale(...)`.
 
 The classic use case: in a multi-tenant app, each tenant exposes a
-different subset of the globally supported locales — and possibly a
+different subset of the globally supported locales - and possibly a
 different default language. Tenant A allows `en + de` with `en` default,
 Tenant B allows `en + fr + es` with `fr` default. Configure the union of
 all locales in `supported_locales`, then narrow + redefine the default
@@ -75,7 +75,7 @@ It's tempting to mutate the Laravel config per request to swap the
 default locale. Three problems with that:
 
 1. **`fallback_locale` is overloaded.** It's also Laravel's translation
-   fallback — flipping it per tenant changes translation behavior, not
+   fallback - flipping it per tenant changes translation behavior, not
    just URL behavior. Two unrelated concepts coupled by accident.
 2. **Octane / worker leaks.** The `Config` repository is a singleton
    that survives across requests. Mutating it without a reset hook
@@ -92,14 +92,14 @@ by every consumer that needs it.
 ## What changes vs. the default behavior
 
 - A request to a route for an inactive-but-supported locale (e.g. `/fr/about`
-  on Tenant A) is treated as if the prefix isn't a locale at all —
+  on Tenant A) is treated as if the prefix isn't a locale at all -
   `SetLocale` falls back to the resolution chain (session → cookie →
   detectors → tenant's default locale), and `RedirectLocale` doesn't
   strip or add the inactive prefix.
 - `Route::localizedSwitcherUrl()` and friends still iterate
   `supportedLocales()`. If you build a switcher, filter against
   `Localizer::activeLocales()` yourself when rendering.
-- `route('about')` resolves the same as before — the underlying routes
+- `route('about')` resolves the same as before - the underlying routes
   for inactive locales still exist physically; the package just won't
   *route* the user there via locale detection.
 - `hide_default_locale` follows the **active default locale**, not
@@ -114,7 +114,7 @@ by every consumer that needs it.
 
 The reason is timing. Service providers register routes **at boot**;
 your `TenantLocales` middleware sets `setActiveDefaultLocale()` **at
-request time**. Boot runs first, middleware second — so when
+request time**. Boot runs first, middleware second - so when
 `TranslateMacro::register()` decides which locale gets the unprefixed
 `without_locale.*` variant, no override has been set yet and it falls
 back to `config('app.fallback_locale')`.
@@ -136,7 +136,7 @@ back to `config('app.fallback_locale')`.
      is /about (English path), not /ueber (German path)
 ```
 
-The route table is fixed after boot — the runtime override has nothing
+The route table is fixed after boot - the runtime override has nothing
 to rewrite. With `Route::localize()` this isn't a problem, because
 every locale shares the *same* URI (`/about`); only the prefix differs,
 and the prefix is stripped at URL-generation time, not at registration
@@ -145,7 +145,7 @@ time.
 **For multi-tenant apps with different defaults, use `Route::localize()`.**
 If you really need translated paths *and* per-tenant defaults, you'll
 have to register per-locale `without_locale.*` routes yourself and
-extend `UrlGenerator` to pick between them — see the source of
+extend `UrlGenerator` to pick between them - see the source of
 `TranslateMacro` for a starting point.
 
 ## API summary

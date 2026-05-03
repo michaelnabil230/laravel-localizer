@@ -50,13 +50,13 @@ addresses them at the architecture level:
   `RedirectLocale` skips non-safe methods to avoid the 302→GET
   browser downgrade that silently dropped request bodies in the
   original.
-- **Translated routes with placeholders just work — including optional
+- **Translated routes with placeholders just work - including optional
   `{type?}` segments and dynamic model slugs.** The original package
   built localized URLs by reverse-engineering the *current request URI*
   back to its translation key (`getRouteNameFromAPath`), then
   re-translating into the target locale. That reverse-lookup ran the URI
   through `parse_url()`, which treats `?` as the start of a query string
-  and mangled optional segments — `services/{type?}` became
+  and mangled optional segments - `services/{type?}` became
   `services/{type`
   ([mcamara/laravel-localization#933](https://github.com/mcamara/laravel-localization/issues/933)).
   Translated routes with dynamic slugs produced 404s on locale switch
@@ -71,14 +71,14 @@ addresses them at the architecture level:
   ```
 
   Switching to German with `Route::localizedUrl('de')` is then a
-  name lookup, not a URI rewrite — it resolves
+  name lookup, not a URI rewrite - it resolves
   `translated_de.service.detail` and hands the current parameters
   (`['type' => 'cloud']`) to Laravel's own URL generator, which fills
   the placeholder natively. No `parse_url`, no string surgery on the
   URI, no reverse-lookup from path to lang key. The original lang key
   is consumed once at registration time (in `Route::translate()`) and
   never reconstructed from a request URI again, so there is no
-  equivalent of `getRouteNameFromAPath` in this package — the question
+  equivalent of `getRouteNameFromAPath` in this package - the question
   it answered is simply never asked.
 - **Five middlewares collapsed into two.** `localize`,
   `localizationRedirect`, `localeSessionRedirect`, `localeCookieRedirect`,
@@ -204,8 +204,7 @@ There is no direct replacement for `localizeUrl('/users')` (path-based
 lookup). If a route doesn't have a name yet, give it one and use
 `route()`. The two `Route::localized…Url()` helpers differ in whether
 they emit the prefix for the default locale; the
-[Template Helpers section](../README.md#template-helpers) explains
-when to use which.
+[Template Helpers](/template-helpers) page explains when to use which.
 
 ## 5. Migrate config
 
@@ -316,7 +315,7 @@ straightforward.
   `App::getLocale()` / `App::setLocale()` directly - Laravel's own API.
 - **Locale aliasing (`localesMapping`).** Implement as a custom
   detector that maps the alias to a supported locale and register it
-  in `detectors`. See [Detectors](../README.md#detectors).
+  in `detectors`. See [Detectors](/detectors).
 - **Nested locale metadata** (`name`, `script`, `native`, `regional`).
   Not part of this package's config. Keep that data in your own list
   if your switcher renders it.

@@ -3,3 +3,8 @@
 /.phpunit*
 /.env
 /composer.lock
+
+# Node / VitePress docs site
+/node_modules
+/docs/.vitepress/cache
+/docs/.vitepress/dist

@@ -160,7 +160,7 @@ $this->app->bind(
 
 ### Verifying the adapter is wired up
 
-The v1 case fails silently — no error, just stale route names — so a
+The v1 case fails silently - no error, just stale route names - so a
 quick check from `php artisan tinker` is worth it:
 
 ```php
@@ -254,4 +254,4 @@ for in-page links. For `hreflang` tags, canonical URLs and sitemaps you
 want all locales at once and a guaranteed canonical form (no 301
 round-trip on the default locale). Render those server-side via
 `Route::localizedUrl($locale)` regardless of which JS helper you use.
-See [Template Helpers in the README](../README.md#template-helpers).
+See [Template Helpers](/template-helpers).

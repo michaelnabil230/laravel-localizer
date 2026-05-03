@@ -31,12 +31,12 @@ translated routes runs.
 
 In multi-tenant apps where the default locale varies per tenant, prefer
 `Localizer::setActiveDefaultLocale()` over mutating
-`app.fallback_locale` — see [docs/multitenancy.md](multitenancy.md).
+`app.fallback_locale` - see [docs/multitenancy.md](multitenancy.md).
 
 ## Mixing localized and unlocalized routes
 
 You can register routes outside `Route::localize()` / `Route::translate()`
-in the same middleware group — they won't be touched. Both `SetLocale`
+in the same middleware group - they won't be touched. Both `SetLocale`
 and `RedirectLocale` look for a `locale_type` action attribute on the
 matched route, which the macros set automatically; routes registered
 without the macros simply have no `locale_type` and pass through:
@@ -49,7 +49,7 @@ Route::localize(function () {
     Route::get('/about', AboutController::class)->name('about');
 });
 
-// Plain unlocalized route — no redirect, no App::setLocale() — works fine.
+// Plain unlocalized route - no redirect, no App::setLocale() - works fine.
 Route::get('/admin', AdminController::class)->name('admin');
 ```
 
@@ -69,7 +69,7 @@ controller. Write your controllers as if the locale weren't in the URI:
 // Correct:
 public function index(Request $request, ?string $country = null) { … }
 
-// Wrong — $locale will receive the country, not the locale:
+// Wrong - $locale will receive the country, not the locale:
 public function index(Request $request, string $locale, ?string $country = null) { … }
 ```
 
@@ -79,12 +79,12 @@ Read the active locale via `App::getLocale()` if you need it.
 
 If your localized routes use route model bindings with **per-locale slugs**
 (`/de/blog/{post:slug}` resolving a German slug, `/en/blog/{post:slug}` the
-English one — see recipe below), `SetLocale` must run **before** Laravel's
+English one - see recipe below), `SetLocale` must run **before** Laravel's
 `SubstituteBindings` middleware. Otherwise `resolveRouteBinding()` reads
 the fallback locale instead of the request's locale.
 
 The recommended setup (`web(append: [SetLocale, RedirectLocale])`) handles
-this automatically — both middlewares become part of the `web` group,
+this automatically - both middlewares become part of the `web` group,
 which runs before `SubstituteBindings`. If you register them elsewhere
 (e.g. as global middleware after the routing pipeline), verify the order.
 

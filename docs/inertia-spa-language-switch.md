@@ -1,13 +1,13 @@
-> ⚠️ **Experimental — not yet verified end-to-end.**
+> ⚠️ **Experimental - not yet verified end-to-end.**
 > The patterns below are written from analysis of how Inertia v2, Ziggy and
 > this package interact, but I haven't run a full integration test against
 > them yet. Treat this as a working sketch: the direction should be right,
 > but expect to debug. Issues / PRs welcome once you've tried it.
 >
 > The **recommended default** for a language switcher remains a plain `<a>`
-> tag with full reload (see the [Language Switcher section in the
-> README](../readme.md#language-switcher)). Only reach for the setup below
-> if you specifically want SPA navigation across language switches.
+> tag with full reload (see [Language Switcher](/language-switcher)). Only
+> reach for the setup below if you specifically want SPA navigation across
+> language switches.
 
 # Inertia + Language Switcher
 
@@ -20,7 +20,7 @@ language everywhere.
 
 `@routes` renders Ziggy's route table **once** on the initial page load as
 a global `const Ziggy = {...}` in the HTML head. On an SPA visit only JSON
-comes across the wire; the HTML stays — and so does the route table for
+comes across the wire; the HTML stays - and so does the route table for
 the locale that was rendered initially. `route('about')` keeps resolving
 against that frozen snapshot.
 
@@ -44,11 +44,12 @@ public function share(Request $request): array
 }
 ```
 
-With the container binding `Ziggy::class → LocalizerZiggy::class` (see the
-[Ziggy adapter in the README](../readme.md#ziggy-localizerziggy-adapter)),
-the closure produces the locale-correct route table on every visit.
+With the container binding `Ziggy::class -> LocalizerZiggy::class` (see
+the [JavaScript Route Helpers](/javascript-route-helpers) page for the
+adapter), the closure produces the locale-correct route table on every
+visit.
 
-You can drop `@routes` from the HTML root template — the shared prop takes
+You can drop `@routes` from the HTML root template - the shared prop takes
 over.
 
 ## 2. Make `route()` reactive to `usePage()`
@@ -57,7 +58,7 @@ Naive approach: overwrite `globalThis.Ziggy` on every visit. This breaks
 the moment **Inertia v2 history-state caching** enters the picture. When
 the user navigates to a URL they've visited before (including a forward
 click on a `<Link>`), Inertia can restore the page along with its props
-from the history cache — without a server round-trip.
+from the history cache - without a server round-trip.
 
 A globally held route table is then guaranteed to drift out of sync:
 `usePage().props.locale` shows the restored language, but `globalThis.Ziggy`
@@ -100,7 +101,7 @@ No more global to keep in sync. `route('about')` always resolves against
 
 ## 3. Update `<html lang>` on SPA visits
 
-Inertia only swaps the app container on a visit, not the root template —
+Inertia only swaps the app container on a visit, not the root template -
 so `<html lang="...">` stays on the language that was rendered initially.
 Browser translations, screen readers and SEO crawlers read the value
 literally.
@@ -123,7 +124,7 @@ router.on('success', (event) => {
 
 The switcher must use `Route::localizedSwitcherUrl($locale)`, not
 `Route::localizedUrl($locale)`. The latter returns the **canonical**,
-unprefixed form (`/about`) for the default locale — correct for
+unprefixed form (`/about`) for the default locale - correct for
 hreflang/sitemap, but no good for switching: without a locale prefix in
 the URL, `SetLocale` has nothing to read, falls back to the persisted
 session locale, and the switch is a no-op.
