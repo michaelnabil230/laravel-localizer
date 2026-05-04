@@ -33,6 +33,10 @@
         "orchestra/testbench": "^7.0 || ^8.0 || ^9.0 || ^10.0 || ^11.0",
         "phpunit/phpunit": "^9.6 || ^10.1 || ^11.0 || ^12.0 || ^13.0"
     },
+    "suggest": {
+        "tighten/ziggy": "Use Ziggy v2+ as your client-side route helper. Bind \\Tighten\\Ziggy\\Ziggy::class to NielsNumbers\\LaravelLocalizer\\Routing\\LocalizerZiggyV2::class to make route() locale-aware in JS.",
+        "tightenco/ziggy": "Use Ziggy v1 as your client-side route helper. Bind \\Tightenco\\Ziggy\\BladeRouteGenerator::class to NielsNumbers\\LaravelLocalizer\\Routing\\LocalizerBladeRouteGeneratorV1::class to make route() locale-aware in JS."
+    },
     "autoload": {
         "psr-4": {
             "NielsNumbers\\LaravelLocalizer\\": "src"
