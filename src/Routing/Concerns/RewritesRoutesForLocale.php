@@ -10,7 +10,7 @@ trait RewritesRoutesForLocale
     protected function rewriteForCurrentLocale(array $routes): array
     {
         $appLocale     = App::getLocale();
-        $defaultLocale = config('app.fallback_locale');
+        $defaultLocale = Localizer::defaultLocale();
         $useUnprefixed = Localizer::hideDefaultLocale()
                       && $appLocale === $defaultLocale;
         $translatedPrefix = "translated_{$appLocale}.";
