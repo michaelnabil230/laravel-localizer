@@ -7,79 +7,59 @@ but the wiring differs.
 
 ## Why migrate
 
-The original package was the first to tackle locale-aware routing in
-Laravel and powered multilingual apps for a decade. Several issues
-that piled up over time were not fixable as patches - they were
-consequences of generating routes dynamically per request. This rewrite
-addresses them at the architecture level:
+Issues from the original's dynamic-routes architecture that this
+rewrite fixes at the design level:
 
-- **`php artisan route:cache` is now working.** For the original,
-  `route:cache` did not work - routes were generated dynamically per
-  request, so the cache either silently broke the app or shipped a
-  cache for one locale only. The original shipped its own
-  `route:trans:cache` command as a custom workaround, which itself
-  broke on Laravel 11
-  ([mcamara/laravel-localization#927](https://github.com/mcamara/laravel-localization/issues/927)).
-  This package registers two static routes per definition (one with a
-  `{locale}` placeholder, one without), so plain `route:cache` works
-  on every supported Laravel version.
-- **`php artisan route:list` shows every variant.** In the original,
-  `route:list` only listed the routes registered for the current
-  process's locale - a misleading partial view that hid half your
-  app's URLs. Here, `with_locale.{name}` and `without_locale.{name}`
-  (and per-locale `translated_{locale}.{name}` for `Route::translate()`)
-  appear as separate rows in one table.
-- **No more locale leakage onto unlocalized routes.** The original's
-  recommended `'prefix' => LaravelLocalization::setLocale()` had a
-  side effect: hitting *any* route - even one in `urlsIgnored` -
-  would call `App::setLocale()`. That broke `/admin`, `/api/health`,
-  and anything else outside the localized group. Here, both `SetLocale`
-  and `RedirectLocale` only act on routes registered through
-  `Route::localize()` / `Route::translate()` (detected via the
-  `locale_type` action attribute the macros set); plain routes in the
-  same `web` group pass through with zero side effects.
-- **POST/PUT/DELETE redirects no longer lose form bodies.**
-  `RedirectLocale` skips non-safe methods to avoid the 302→GET
-  browser downgrade that silently dropped request bodies in the
-  original.
-- **Translated routes with placeholders just work - including optional
-  `{type?}` segments and dynamic model slugs.** The original package
-  built localized URLs by reverse-engineering the *current request URI*
-  back to its translation key (`getRouteNameFromAPath`), then
-  re-translating into the target locale. That reverse-lookup ran the URI
-  through `parse_url()`, which treats `?` as the start of a query string
-  and mangled optional segments - `services/{type?}` became
-  `services/{type`
-  ([mcamara/laravel-localization#933](https://github.com/mcamara/laravel-localization/issues/933)).
-  Translated routes with dynamic slugs produced 404s on locale switch
-  for the same family of reasons
-  ([#885](https://github.com/mcamara/laravel-localization/issues/885)).
-  This package sidesteps the whole class of bugs by registering one
-  *named* static route per locale up front:
-
-  ```
-  translated_en.service.detail   →   /services/{type?}
-  translated_de.service.detail   →   /de/sluzby/{type?}
-  ```
-
-  Switching to German with `Route::localizedUrl('de')` is then a
-  name lookup, not a URI rewrite - it resolves
-  `translated_de.service.detail` and hands the current parameters
-  (`['type' => 'cloud']`) to Laravel's own URL generator, which fills
-  the placeholder natively. No `parse_url`, no string surgery on the
-  URI, no reverse-lookup from path to lang key. The original lang key
-  is consumed once at registration time (in `Route::translate()`) and
-  never reconstructed from a request URI again, so there is no
-  equivalent of `getRouteNameFromAPath` in this package - the question
-  it answered is simply never asked.
-- **Five middlewares collapsed into two.** `localize`,
-  `localizationRedirect`, `localeSessionRedirect`, `localeCookieRedirect`,
-  `localeViewPath` had subtle ordering rules and silently broke locale
-  persistence if you got them wrong. Here: `SetLocale` + `RedirectLocale`,
-  with persistence as config flags (`persist_locale.session` /
-  `persist_locale.cookie`).
-- **First-class adapters for Ziggy and Wayfinder.** The original had
-  no client-side story; Inertia setups had to roll their own.
+- **`route:cache` works.** The original generated routes per request,
+  so Laravel's `route:cache` couldn't be used and a custom
+  `route:trans:cache` workaround was needed. Here every route is
+  registered statically (`with_locale.*` + `without_locale.*`), so
+  plain `route:cache` works on every supported Laravel version.
+- **`route:list` shows every variant.** All locale variants appear as
+  separate rows in one table. The original only listed the routes for
+  the current process's locale - a misleading half-view.
+- **No locale leakage onto unlocalized routes.** `SetLocale` /
+  `RedirectLocale` only act on routes registered through
+  `Route::localize()` / `Route::translate()`. The original's
+  `'prefix' => LaravelLocalization::setLocale()` mutated
+  `App::getLocale()` even on `urlsIgnored` routes, breaking `/admin`,
+  `/api/health` and anything else outside the localized group.
+- **POST/PUT/DELETE redirects keep their bodies.** `RedirectLocale`
+  skips non-safe methods, avoiding the 302→GET browser downgrade that
+  silently dropped form bodies in the original.
+- **Translated routes with placeholders work.** Optional segments
+  (`services/{type?}`) and dynamic slugs broke in the original because
+  it reverse-engineered the request URI back to its lang key via
+  `parse_url()`, which mangles `?`
+  ([#933](https://github.com/mcamara/laravel-localization/issues/933),
+  [#885](https://github.com/mcamara/laravel-localization/issues/885)).
+  Here each variant is a named static route - locale switch is a name
+  lookup, no URI parsing.
+- **Five middlewares collapsed into two.** `SetLocale` +
+  `RedirectLocale`, with persistence as config flags. The original had
+  `localize`, `localizationRedirect`, `localeSessionRedirect`,
+  `localeCookieRedirect`, `localeViewPath` with subtle ordering rules
+  that silently broke locale persistence if you got them wrong.
+- **Multi-tenant ready.** Per-request runtime overrides for the active
+  locales (`Localizer::setActiveLocales()`) and the default locale
+  (`Localizer::setActiveDefaultLocale()`) let each tenant ship a
+  different subset of locales and a different unprefixed default
+  without touching global config or Laravel's translation fallback.
+  The original had no concept of per-request locale scoping. See
+  [Multitenancy](/multitenancy).
+- **Modular architecture friendly.** Each module can call
+  `Route::localize()` / `Route::translate()` from its own
+  `RouteServiceProvider`; static registration means `route:cache` works
+  no matter how many modules contribute localized routes. The original
+  required each module to wrap its routes in
+  `Route::group(['prefix' => LaravelLocalization::setLocale()], …)`,
+  which re-ran `setLocale()` once per module per request. Here
+  `SetLocale` runs once via the middleware kernel, regardless of how
+  many modules participate.
+- **First-class Ziggy / Wayfinder support.** Adapter classes ship in
+  the package (`LocalizerZiggyV1/V2`, `LocalizerBladeRouteGeneratorV1`,
+  `localizedRoute()` helper); Inertia setups previously had to roll
+  their own.
 
 ## 1. Swap the package
 
