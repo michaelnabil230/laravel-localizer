@@ -40,7 +40,6 @@ export default defineConfig({
           { text: 'Template Helpers', link: '/template-helpers' },
           { text: 'Language Switcher', link: '/language-switcher' },
           { text: 'JavaScript Route Helpers', link: '/javascript-route-helpers' },
-          { text: 'Inertia SPA Switcher', link: '/inertia-spa-language-switch' },
         ]
       },
       {
