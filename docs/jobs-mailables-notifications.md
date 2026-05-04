@@ -18,11 +18,9 @@ together. Laravel handles this for you in two of the three common cases.
 
 ## Mailables: automatic via `Mail::to()->locale()`
 
-Pass the recipient's locale to the pending mail; Laravel wraps the
-entire build and send in `withLocale($locale, ...)` (see
-[laravel/framework#23178](https://github.com/laravel/framework/pull/23178)),
-so any `route(...)` call inside your mailable's `build()`/`content()`
-resolves with the correct locale.
+Pass the recipient's locale to the pending mail. Build, render and send
+all run with that locale, so any `route(...)`, `__('...')`, validation
+or date formatting inside your mailable resolves correctly:
 
 ```php
 Mail::to($user)
@@ -32,8 +30,8 @@ Mail::to($user)
 
 ## Notifications: automatic via the notifiable's preferred locale
 
-If your notifiable model implements `HasLocalePreference`, Laravel's
-`NotificationSender` wraps each delivery in `withLocale(...)` for you.
+If your notifiable model implements `HasLocalePreference`, each
+notification delivery runs with that locale automatically:
 
 ```php
 class User extends Model implements HasLocalePreference
@@ -47,12 +45,11 @@ class User extends Model implements HasLocalePreference
 
 ## Plain queued jobs: manual
 
-There is **no** built-in propagation for arbitrary queued jobs (see
-[laravel/ideas#394](https://github.com/laravel/ideas/issues/394),
-closed without a fix). You have to scope the locale yourself; easiest
-by adding the `Localizable` trait to your job and wrapping the
-locale-sensitive work in `$this->withLocale(...)`. URLs, translations,
-validation, dates etc. inside the closure all see the scoped locale:
+There is **no** built-in propagation for arbitrary queued jobs. You
+have to scope the locale yourself; easiest by adding the `Localizable`
+trait to your job and wrapping the locale-sensitive work in
+`$this->withLocale(...)`. URLs, translations, validation, dates etc.
+inside the closure all see the scoped locale:
 
 ```php
 use Illuminate\Bus\Queueable;

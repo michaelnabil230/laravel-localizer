@@ -3,8 +3,8 @@ layout: home
 
 hero:
   name: Laravel Localizer
-  text: Localized URLs for Laravel
-  tagline: Detect a visitor's language, redirect to the matching locale, and let `route('about')` always pick the right URL - fully `route:cache` compatible.
+  text: Locale-aware routing for Laravel
+  tagline: Auto-detect, auto-redirect, and resolve `route()` per language. Static routes, `route:cache` compatible.
   actions:
     - theme: brand
       text: Get Started
@@ -14,17 +14,17 @@ hero:
       link: https://github.com/niels-numbers/laravel-localizer
 
 features:
-  - title: route:cache compatible
-    details: Two static routes per definition (with and without a locale prefix) - no dynamic registration, full Laravel ecosystem compatibility.
-  - title: Detect & redirect
-    details: Browser, session, cookie, or custom detector chain. Auto-redirects between prefixed and unprefixed variants, query strings preserved.
+  - title: route:cache ready
+    details: Two static routes per definition. No dynamic registration.
+  - title: Auto-detect & redirect
+    details: Browser, session, cookie, or custom detector chain. Query strings preserved.
   - title: Translated URL paths
-    details: Optional truly localized paths - /about, /de/ueber, /fr/a-propos - resolved through Laravel's URL generator. Adapters for Ziggy and Wayfinder included.
+    details: /about, /de/ueber, /fr/a-propos. Resolved through Laravel's URL generator.
   - title: Multi-tenant ready
-    details: Per-request runtime overrides for active locales and default locale, without mutating Laravel's translation config or leaking across Octane workers.
+    details: Per-request overrides for active locales and default locale. Octane-safe.
 ---
 
-## 30-second example
+## Example
 
 ```php
 Route::localize(function () {
@@ -32,22 +32,11 @@ Route::localize(function () {
 });
 ```
 
-Produces:
-
-- `/about` - default locale (e.g. English), prefix hidden
-- `/de/about` - German
-- `/fr/about` - French (and so on for every configured locale)
-
-In your code, keep using `route('about')` - the package picks the right
-variant based on the current locale.
+`route('about')` returns `/about` (default locale), `/de/about`, `/fr/about` based on the current locale.
 
 ## Successor to `mcamara/laravel-localization`
 
-This package is the official successor to
-[`mcamara/laravel-localization`](https://github.com/mcamara/laravel-localization),
-rebuilt on **static routes** so that `php artisan route:cache` works out
-of the box and translated routes resolve through Laravel's own URL
-generator - no URI parsing required.
+Rebuilt on **static routes**: `route:cache` works out of the box,
+translated routes resolve through Laravel's own URL generator.
 
-Migrating from the original? See the
-[step-by-step migration guide](/migrating-from-laravel-localization).
+Migrating? See the [step-by-step migration guide](/migrating-from-laravel-localization).

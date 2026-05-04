@@ -1,28 +1,22 @@
 # Language Switcher
 
-Use a single switcher component anywhere in your layout. It picks the
-right URLs from **`Route::localizedSwitcherUrl()`** so each link points
-to the **current page** in the target locale. Clicking a link triggers a
-normal navigation: the URL carries the new locale, `SetLocale` reads it
-on the next request and persists it to session/cookie.
+A switcher uses **`Route::localizedSwitcherUrl()`** so each link points
+to the **current page** in the target locale. Click triggers a normal
+navigation: the URL carries the new locale, `SetLocale` reads it on the
+next request and persists it to session/cookie.
 
 ::: tip Why a different helper than `localizedUrl()`?
-`localizedUrl()` returns the **canonical** URL (no `/en` prefix when
-English is the hidden default), correct for `<link rel="alternate">`
-and sitemaps.
+`localizedUrl()` returns canonical URLs (no prefix for the hidden
+default), correct for hreflang and sitemaps.
 
-But a switcher link to the default locale needs the prefix: it's the
+A switcher needs the prefix even for the default locale - it's the
 only way the URL itself can tell `SetLocale` which language to switch
-to. Without it, a stale session locale would win and `RedirectLocale`
-would bounce the visitor back. `localizedSwitcherUrl()` always emits
-the prefixed form; `RedirectLocale` then strips it on the follow-up
-request, so the browser ends up on the canonical URL anyway, one
-invisible 302 hop.
+to. `localizedSwitcherUrl()` always emits the prefixed form;
+`RedirectLocale` strips it on the follow-up, so the user lands on the
+canonical URL anyway, with one invisible 302 hop.
 :::
 
 ## Blade
-
-Define once as a component, include anywhere:
 
 ```blade
 {{-- resources/views/components/language-switcher.blade.php --}}
@@ -40,9 +34,7 @@ Define once as a component, include anywhere:
 
 ## Inertia (Vue / React)
 
-The Inertia bridge (Ziggy or Wayfinder underneath) doesn't see
-`Route::localizedUrl()` directly. Render the per-locale URLs
-server-side and ship them as shared props:
+Render per-locale URLs server-side and ship them as shared props:
 
 ```php
 // app/Http/Middleware/HandleInertiaRequests.php
@@ -57,7 +49,7 @@ public function share(Request $request): array
 }
 ```
 
-Then build a SPA component (Vue example; React works analogously):
+Then build a SPA component (Vue example, React analogous):
 
 ```vue
 <!-- resources/js/Components/LanguageSwitcher.vue -->
@@ -74,21 +66,13 @@ const { localizedUrls, locale } = usePage().props;
 </template>
 ```
 
-A plain `<a>` triggers a full-page reload, which is typically what you
-want when switching languages: the HTML `lang` attribute, shared props
-and any cached translations all need to refresh.
-
-::: info SPA language switch via `<Link>`
-Has a few extra moving parts (Ziggy as a shared prop, `route()`
-reactive to `usePage()`, `<html lang>` updates, prefixed switcher URLs).
-See [Inertia SPA Switcher](/inertia-spa-language-switch) for a working
-sketch, marked **experimental**, not yet verified end-to-end. Full
-reload remains the recommended default.
-:::
+A plain `<a>` triggers a full reload, which is what you usually want
+when switching languages: the HTML `lang`, shared props and cached
+translations all need to refresh.
 
 ## Caveats
 
 For routes with per-locale model bindings (translated slugs), some
 links may build URLs that 404 on follow. Render switcher items
 conditionally or add a fallback in `resolveRouteBinding()`. See
-[Caveats & Recipes](/caveats-and-recipes#route-model-binding-with-translated-slugs).
+[Caveats](/caveats-and-recipes#route-model-binding-with-translated-slugs).

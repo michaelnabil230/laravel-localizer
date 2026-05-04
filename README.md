@@ -5,17 +5,13 @@
 ![Laravel](https://img.shields.io/badge/Laravel-9%20%7C%2010%20%7C%2011%20%7C%2012%20%7C%2013-blue?logo=laravel&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-> **Official successor to [`mcamara/laravel-localization`](https://github.com/mcamara/laravel-localization).**
-> Built on static routes, `route:cache` works out of the box.
+> Successor to [`mcamara/laravel-localization`](https://github.com/mcamara/laravel-localization). Static routes, `route:cache` ready.
 
-Detect a visitor's language and serve the right localized URL. Define
-your routes once, get prefixed (`/de/about`) and unprefixed (`/about`)
-variants for free, and let `route('about')` always pick the right one
-for the current locale.
+Locale-aware routing for Laravel: auto-detect, auto-redirect, and resolve `route()` per language.
 
-**Full documentation: [localizer.adam-nielsen.de](https://localizer.adam-nielsen.de)**
+**Documentation: [localizer.adam-nielsen.de](https://localizer.adam-nielsen.de)**
 
-## 30-second example
+## Example
 
 ```php
 Route::localize(function () {
@@ -37,26 +33,7 @@ picks the right variant based on the current locale.
 composer require niels-numbers/laravel-localizer
 ```
 
-Then publish the config and register the middleware. Full setup in the
-[Installation guide](https://localizer.adam-nielsen.de/installation).
-
-## Migrating from `mcamara/laravel-localization`?
-
-See the [step-by-step migration guide](https://localizer.adam-nielsen.de/migrating-from-laravel-localization).
-The original package remains actively maintained by
-[@jordyvanderhaegen](https://github.com/jordyvanderhaegen) for
-Laravel/PHP compatibility, security and small bug fixes; this package
-addresses the long-standing limitations that follow from the original's
-runtime route generation (chiefly that `route:cache` doesn't work out
-of the box).
-
-## Testing
-
-```bash
-make build && make install && make test
-```
-
-Or without Make: see the [contributing notes](CONTRIBUTING.md).
+[Setup guide](https://localizer.adam-nielsen.de/installation) · [Migrating from `mcamara/laravel-localization`?](https://localizer.adam-nielsen.de/migrating-from-laravel-localization)
 
 ## License & credits
 

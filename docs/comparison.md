@@ -2,79 +2,55 @@
 
 ## When to use this package
 
-Use this package if you want:
+Use it for:
 
-- automatic locale detection from the request (e.g. from the browser)
+- automatic locale detection (browser, session, cookie, custom)
 - automatic redirects to localized routes
-- the option to hide the default locale in the URL
-- fully translatable routes (e.g. `/en/humans`, `/de/menschen`)
+- hidden default locale in URLs (`/about` instead of `/en/about`)
+- fully translatable routes (`/en/humans` vs `/de/menschen`)
 
-You **don't** need it if you're fine with only:
-
-- `example.com/de/blog`
-- `example.com/en/blog`
-
-and don't need `example.com/blog` or locale detection from the browser.
+You don't need it if you're fine with `example.com/de/blog` /
+`example.com/en/blog` only and don't need detection or unprefixed
+defaults.
 
 ## Comparison to other packages
 
 ### [`mcamara/laravel-localization`](https://github.com/mcamara/laravel-localization)
 
-The original package this one is the official successor to. It remains
-actively maintained by
+The original package this one succeeds. Still maintained by
 [@jordyvanderhaegen](https://github.com/jordyvanderhaegen) for
-Laravel/PHP compatibility, security and small bug fixes. The original
-was the first to tackle the routing problem; it generates routes
-dynamically at runtime, which means `route:cache` doesn't work out of
-the box and parts of the Laravel ecosystem aren't fully compatible:
-several classes of long-standing bugs follow from that model.
-
-In contrast, this package registers **two static routes** per
-definition (one with a `{locale}` placeholder and one without), making
-it fully cache-safe and compatible with most modern Laravel packages.
-See the [migration guide](/migrating-from-laravel-localization) for a
-step-by-step swap and the full list of long-standing issues this
-rewrite addresses.
+Laravel/PHP compatibility, security, and small bug fixes. Long legacy
+codebase whose original architecture comes with limitations that
+motivated this rewrite - see
+[Why migrate](/migrating-from-laravel-localization#why-migrate).
 
 ### [`codezero-be/laravel-localized-routes`](https://github.com/codezero-be/laravel-localized-routes) (deprecated)
 
-An alternative to *laravel-localization*, using a **route-per-locale**
-approach (N× routes, one per language). While that package is no
-longer maintained, many of its design ideas influenced this one. Here,
-only **two routes** per definition are created, striking a balance
-between performance, maintainability, and flexibility.
+Route-per-locale (Nx routes per definition). No longer maintained, but
+its design ideas influenced this one - here only two routes per
+definition.
 
 ### [`spatie/laravel-translatable`](https://github.com/spatie/laravel-translatable)
 
-Serves a different purpose: translating **Eloquent model fields**, not
-routes. It works perfectly alongside this package if you want
-translatable slugs.
+Translates **Eloquent model fields**, not routes. Works alongside this
+package for translatable slugs.
 
 ## Background
 
-This package is the official successor to
-[mcamara/laravel-localization](https://github.com/mcamara/laravel-localization),
-which has a very long legacy in the Laravel ecosystem. I (Adam Nielsen)
-was a collaborator on the original package; since @mcamara has moved on
-from Laravel,
-[@jordyvanderhaegen](https://github.com/jordyvanderhaegen) continues to
-maintain it for Laravel/PHP compatibility, security and small bug
-fixes. This rewrite addresses the long-standing limitations that follow
-from the original's architecture, chiefly that `route:cache` doesn't
-work out of the box and parts of the Laravel ecosystem aren't fully
-compatible.
+I (Adam Nielsen) was a collaborator on the original
+[mcamara/laravel-localization](https://github.com/mcamara/laravel-localization).
+Since @mcamara has moved on from Laravel,
+[@jordyvanderhaegen](https://github.com/jordyvanderhaegen) continues
+to maintain it for compatibility and small fixes. This rewrite
+addresses long-standing limitations that follow from the original's
+runtime route generation.
 
-The [original package](https://github.com/mcamara/laravel-localization)
-generated **dynamic routes**, which led to cache and compatibility
-issues.
+The original generated **dynamic routes** (cache + compatibility
+issues).
 [laravel-localized-routes](https://github.com/codezero-be/laravel-localized-routes)
-solved this by generating **static routes for each locale** (N× per
-definition).
-
-This package takes a **middle path**: each route is registered
-**twice**, once with a `{locale}` placeholder, and once without. This
-avoids dynamic routing issues while keeping the number of routes
-manageable.
+solved this with **static per-locale routes** (Nx per definition).
+This package takes the **middle path**: each route registered
+**twice** (one with `{locale}`, one without).
 
 ## Credits
 

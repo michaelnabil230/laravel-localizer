@@ -23,14 +23,6 @@ addresses them at the architecture level:
   This package registers two static routes per definition (one with a
   `{locale}` placeholder, one without), so plain `route:cache` works
   on every supported Laravel version.
-- **Higher compatibility with the wider Laravel ecosystem.** Because
-  routes are static instead of dynamically generated per request,
-  third-party packages that introspect or cache the route table -
-  Ziggy, Wayfinder, Telescope, route-list-driven tooling - see every
-  variant up front and don't get surprised. Many of the collisions
-  reported against the original package were downstream consequences
-  of the dynamic-routing model; switching to static routes removes
-  the root cause rather than patching the symptoms.
 - **`php artisan route:list` shows every variant.** In the original,
   `route:list` only listed the routes registered for the current
   process's locale - a misleading partial view that hid half your
