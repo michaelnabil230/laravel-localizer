@@ -1,12 +1,16 @@
 # Livewire
 
-Livewire 3 works with Laravel Localizer out of the box. No
-`setUpdateRoute()` recipe, no `/livewire/update` URL rewriting, no
-JavaScript fetch interception.
+Livewire 3 and Livewire 4 both work with Laravel Localizer out of the
+box. No `setUpdateRoute()` recipe, no URL rewriting, no JavaScript
+fetch interception. Render your component from a localized route -
+done.
+
+Both major versions are covered by an integration test matrix in CI
+(`tests/Integration/Livewire3/` and `tests/Integration/Livewire4/`).
 
 ## Why it works
 
-Livewire 3 ships with a built-in `SupportLocales` feature hook
+Livewire ships with a built-in `SupportLocales` feature hook
 (`Livewire\Features\SupportLocales\SupportLocales`) that snapshots the
 application locale on render and restores it on update:
 
@@ -17,9 +21,11 @@ application locale on render and restores it on update:
 
 So as long as `SetLocale` has set the right locale **at render time**,
 every subsequent update for that component instance runs with that
-same locale - even though the POST goes to the unprefixed
-`/livewire/update` route. The locale travels inside the snapshot, not
-the URL.
+same locale - even though the update POST has no locale prefix in its
+URL. The locale travels inside the snapshot, not the URL.
+
+The hook is byte-identical between Livewire 3 and 4; the mechanism
+hasn't changed.
 
 ## What that means in practice
 
@@ -39,11 +45,23 @@ The `SetLocale` middleware runs before the controller, sets
 the controller renders the view, Livewire mounts the component, and
 `SupportLocales::dehydrate()` freezes that locale into the snapshot.
 
-Updates POST to `/livewire/update` without a locale prefix, the
-snapshot carries `memo.locale: "de"`, and the action runs with
-`App::getLocale() === 'de'`.
+Subsequent updates restore that locale before the action runs - the
+component method sees `App::getLocale() === 'de'` regardless of what
+URL the update POST went to.
 
-This is verified end-to-end in `tests/Integration/Livewire/`.
+## Differences between Livewire 3 and 4
+
+For application code there is none. The only thing that changed is
+where Livewire posts updates to:
+
+- **Livewire 3** posts to a fixed `/livewire/update`.
+- **Livewire 4** randomizes the path per `app.key`
+  (`/livewire-{hash}/update`) and adds an `X-Livewire` header guard
+  middleware. This is anti-scanner hardening internal to Livewire and
+  has nothing to do with localization.
+
+Either way, `SupportLocales` carries the locale inside the snapshot,
+so the path and the header guard don't affect locale handling.
 
 ## Caveat: don't first-render components on unlocalized routes
 

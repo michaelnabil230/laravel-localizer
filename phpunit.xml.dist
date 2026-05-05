@@ -4,8 +4,11 @@
         <testsuite name="Package">
             <directory>tests/Feature</directory>
         </testsuite>
-        <testsuite name="Integration">
-            <directory>tests/Integration</directory>
+        <testsuite name="Livewire3">
+            <directory>tests/Integration/Livewire3</directory>
+        </testsuite>
+        <testsuite name="Livewire4">
+            <directory>tests/Integration/Livewire4</directory>
         </testsuite>
     </testsuites>
 </phpunit>

@@ -1,6 +1,6 @@
 <?php
 
-namespace NielsNumbers\LaravelLocalizer\Tests\Integration\Livewire;
+namespace NielsNumbers\LaravelLocalizer\Tests\Integration\Livewire3;
 
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Route;
@@ -34,6 +34,13 @@ class LivewireLocaleTest extends TestCase
     {
         if (! class_exists(\Livewire\Livewire::class)) {
             $this->markTestSkipped('livewire/livewire is not installed.');
+        }
+
+        // Livewire 4 introduces EndpointResolver (randomized update path) and
+        // RequireLivewireHeaders middleware. The v3 suite assumes the v3
+        // contract: /livewire/update with no header guard. Skip if v4 is in.
+        if (class_exists(\Livewire\Mechanisms\HandleRequests\EndpointResolver::class)) {
+            $this->markTestSkipped('livewire/livewire 4.x detected; covered by the Livewire4 suite.');
         }
 
         parent::setUp();
