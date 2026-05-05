@@ -58,6 +58,12 @@ export default defineConfig({
         ]
       },
       {
+        text: 'Third-Party Packages',
+        items: [
+          { text: 'Livewire', link: '/livewire' },
+        ]
+      },
+      {
         text: 'Migration',
         items: [
           { text: 'From mcamara/laravel-localization', link: '/migrating-from-laravel-localization' },
