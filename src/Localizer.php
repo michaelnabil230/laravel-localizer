@@ -39,7 +39,45 @@ class Localizer
 
     public function isSupported(?string $locale): bool
     {
-        return $locale !== null && in_array($locale, $this->supportedLocales(), true);
+        if ($locale === null) {
+            return false;
+        }
+
+        foreach ($this->supportedLocales() as $supported) {
+            if (strcasecmp($supported, $locale) === 0) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Return the canonical form of $locale as configured in
+     * `supported_locales`, matched case-insensitively. Returns the input
+     * unchanged when no match exists, so callers passing unsupported
+     * values (e.g. `'klingon'`) keep the existing pass-through behavior.
+     *
+     * Use this whenever the package consumes a locale value that may
+     * originate from app code (App::setLocale('EN')), DB columns with
+     * legacy uppercase storage, or third-party detectors. Centralizing
+     * the lookup keeps the rest of the package free of strtolower()
+     * sprinkles and works correctly for non-trivial codes (pt-BR, zh-Hant)
+     * because the canonical form comes from config, not from a string op.
+     */
+    public function canonicalize(?string $locale): ?string
+    {
+        if ($locale === null) {
+            return null;
+        }
+
+        foreach ($this->supportedLocales() as $supported) {
+            if (strcasecmp($supported, $locale) === 0) {
+                return $supported;
+            }
+        }
+
+        return $locale;
     }
 
     /**
@@ -56,7 +94,17 @@ class Localizer
 
     public function isActive(?string $locale): bool
     {
-        return $locale !== null && in_array($locale, $this->activeLocales(), true);
+        if ($locale === null) {
+            return false;
+        }
+
+        foreach ($this->activeLocales() as $active) {
+            if (strcasecmp($active, $locale) === 0) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

@@ -41,6 +41,18 @@ class UrlGenerator extends BaseUrlGenerator
     {
         $urlLocale = $parameters['locale'] ?? null;
         $appLocale = App::getLocale();
+
+        // Normalize casing so App::setLocale('EN') and route('about',
+        // ['locale' => 'EN']) produce the same canonical URLs as their
+        // lowercase counterparts. Falls back to the input unchanged when
+        // not in supported_locales, preserving existing behavior for
+        // callers passing unsupported values (e.g. 'klingon').
+        $appLocale = Localizer::canonicalize($appLocale);
+        if ($urlLocale !== null) {
+            $urlLocale = Localizer::canonicalize($urlLocale);
+            $parameters['locale'] = $urlLocale;
+        }
+
         $defaultLocale = Localizer::defaultLocale();
         $hideDefault = Localizer::hideDefaultLocale();
         $locale = $urlLocale ?? $appLocale;

@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Facade;
 /**
  * @method static array supportedLocales()
  * @method static bool isSupported(?string $locale)
+ * @method static ?string canonicalize(?string $locale)
  * @method static array activeLocales()
  * @method static bool isActive(?string $locale)
  * @method static void setActiveLocales(?array $locales)

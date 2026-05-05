@@ -251,4 +251,44 @@ class UrlGeneratorTest extends TestCase
 
         $this->assertSame('/items/42', $url->route('items.show', 42, false));
     }
+
+    public function test_normalizes_uppercase_app_locale_to_canonical_url()
+    {
+        config()->set('app.locale', 'en');
+        config()->set('localizer.supported_locales', ['en', 'de']);
+        config()->set('localizer.hide_default_locale', true);
+
+        app()->setLocale('DE'); // legacy DB casing
+
+        Route::get('/{locale}/about', fn () => 'ok')->name('with_locale.about');
+        Route::get('/about', fn () => 'ok')->name('without_locale.about');
+
+        $this->assertSame('/de/about', app('url')->route('about', [], false));
+    }
+
+    public function test_normalizes_uppercase_default_locale_to_unprefixed_url()
+    {
+        config()->set('app.locale', 'en');
+        config()->set('localizer.supported_locales', ['en', 'de']);
+        config()->set('localizer.hide_default_locale', true);
+
+        app()->setLocale('EN'); // legacy DB casing for default locale
+
+        Route::get('/{locale}/about', fn () => 'ok')->name('with_locale.about');
+        Route::get('/about', fn () => 'ok')->name('without_locale.about');
+
+        $this->assertSame('/about', app('url')->route('about', [], false));
+    }
+
+    public function test_normalizes_uppercase_locale_parameter()
+    {
+        config()->set('app.locale', 'en');
+        config()->set('localizer.supported_locales', ['en', 'de']);
+        config()->set('localizer.hide_default_locale', true);
+
+        Route::get('/{locale}/about', fn () => 'ok')->name('with_locale.about');
+        Route::get('/about', fn () => 'ok')->name('without_locale.about');
+
+        $this->assertSame('/de/about', app('url')->route('about', ['locale' => 'DE'], false));
+    }
 }

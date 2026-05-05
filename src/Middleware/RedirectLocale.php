@@ -48,12 +48,22 @@ class RedirectLocale
         // (/de/ueber), directly registered routes (Route::get('/de/foo')) and
         // without_locale.* routes don't — yet they all need this middleware.
         // So we look at the raw path and split off the first segment ourselves.
-        [$prefix, $rest] = array_pad(explode('/', $path, 2), 2, '');
+        [$rawPrefix, $rest] = array_pad(explode('/', $path, 2), 2, '');
 
         // The first path segment counts as a locale only if it's whitelisted —
         // matching by regex would either miss multi-character tags (zh-CN, pt-BR)
         // or treat any two-letter prefix as a locale, redirecting nonsense paths.
-        $hasLocalePrefix = $this->localizer->isActive($prefix);
+        $hasLocalePrefix = $this->localizer->isActive($rawPrefix);
+        $prefix = $this->localizer->canonicalize($rawPrefix);
+
+        // Wrong-case prefix matched a supported locale (e.g. /EN/foo from a
+        // legacy email link) — redirect to the canonical case so the request
+        // hits a registered route (LocalizeMacro constraints are lowercase)
+        // and the URL stays consistent with everything else generated.
+        if ($hasLocalePrefix && $prefix !== $rawPrefix) {
+            $newPath = ($hideDefault && $prefix === $default) ? $rest : $prefix . '/' . $rest;
+            return $this->redirectTo($request, $newPath);
+        }
 
         // Locale prefix matches default + default should be hidden → strip it
         if ($hasLocalePrefix && $prefix === $default && $hideDefault) {

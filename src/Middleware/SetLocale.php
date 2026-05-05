@@ -29,6 +29,12 @@ class SetLocale
 
         $locale = $this->detectLocale($request) ?? $this->localizer->defaultLocale();
 
+        // Always store the canonical form so downstream consumers see one
+        // representation regardless of source (URL segment, session, cookie,
+        // or detector). Keeps App::getLocale() consistent with config keys
+        // (`lang/de/...`, not `lang/DE/...`).
+        $locale = $this->localizer->canonicalize($locale);
+
         if ($this->localizer->storesInSession()) {
             Session::put('locale', $locale);
         }

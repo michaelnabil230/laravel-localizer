@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-05-05
+
+### Fixed
+
+- Locale matching is now case-insensitive across the whole package. App code passing uppercase locale codes (`App::setLocale('EN')`, `route('about', ['locale' => 'DE'])`, or detector return values from legacy DB columns like `idSprache = 'DE'`) previously produced URLs like `/EN/about` that didn't match the lowercase `LocalizeMacro` route constraint and 404'd, and made `__('...')` miss `lang/de/*` lookups. Every locale value now flows through `Localizer::canonicalize()` against `supported_locales` before it lands in a URL, the session, the cookie, or `App::setLocale()`. Mailables triggered after `App::setLocale($user->idSprache)` (e.g. `Notifiable::sendPasswordResetNotification()`) now generate canonical lowercase URLs and load the matching translation files without an app-side `strtolower()` workaround.
+
+### Added
+
+- `Localizer::canonicalize(?string)`: case-insensitive lookup against `supported_locales`, returning the canonical form. Pass-through for `null` and for values not in the config (e.g. `'klingon'`), so callers that intentionally use unsupported locales keep their existing behaviour.
+- `RedirectLocale`: incoming URLs with a wrong-case prefix (e.g. `/EN/foo` from a stale email) now redirect to the canonical form (`/foo` when the default is hidden, `/en/foo` otherwise) instead of falling through to a 404.
+
+### Changed
+
+- `Localizer::isSupported()` and `Localizer::isActive()` are now case-insensitive (`strcasecmp` instead of `in_array(..., true)`). **Behaviour change**: callers who relied on these returning `false` for uppercase input now get `true`. In practice the convention is lowercase, so this matches what users meant; the change is safe for apps that already pass lowercase values.
+
 ## [1.1.0] - 2026-05-04
 
 ### Added
@@ -84,7 +99,8 @@ Initial public release. Architecture is stable; API may still see adjustments ba
 - Inertia + SPA language switcher guide (experimental) at `docs/inertia-spa-language-switch.md`.
 - CI matrix: PHP 8.2–8.4 × Laravel 9–12 (Testbench 7–10).
 
-[Unreleased]: https://github.com/niels-numbers/laravel-localizer/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/niels-numbers/laravel-localizer/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/niels-numbers/laravel-localizer/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/niels-numbers/laravel-localizer/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/niels-numbers/laravel-localizer/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/niels-numbers/laravel-localizer/compare/v0.10.0...v1.0.0
