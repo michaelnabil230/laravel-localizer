@@ -12,6 +12,16 @@ base name - they register `with_locale.{name}`,
 Use `Route::hasLocalized('about')` instead - it checks every variant.
 See [Template Helpers](/template-helpers#has-localized).
 
+## `$route->getName()` returns the prefixed variant
+
+For the same reason, `$request->route()->getName()` returns
+`with_locale.about` / `translated_de.about` etc. - so a comparison like
+`$route->getName() === 'about'` in middleware or gates breaks the
+moment the request hits a non-default locale. Use
+`$route->baseName()` (or `Route::currentBaseName()`) - they strip the
+prefix and pass foreign names through unchanged. See
+[Template Helpers](/template-helpers#base-name).
+
 ## Route names must be unique across both macros
 
 Each name once. Defining the same name through both `Route::localize()`

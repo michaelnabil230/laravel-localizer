@@ -114,4 +114,97 @@ class RouteHelpersTest extends TestCase
     {
         $this->assertFalse(Route::isLocalized());
     }
+
+    public function test_base_name_strips_with_locale_prefix()
+    {
+        Route::middleware(SetLocale::class)->group(function () {
+            Route::localize(function () {
+                Route::get('/about', fn () => Route::current()->baseName())->name('about');
+            });
+        });
+
+        $response = $this->get('/de/about');
+        $response->assertOk();
+        $response->assertSee('about');
+    }
+
+    public function test_base_name_strips_without_locale_prefix()
+    {
+        Route::middleware(SetLocale::class)->group(function () {
+            Route::localize(function () {
+                Route::get('/about', fn () => Route::current()->baseName())->name('about');
+            });
+        });
+
+        $response = $this->get('/about');
+        $response->assertOk();
+        $response->assertSee('about');
+    }
+
+    public function test_base_name_strips_translated_prefix()
+    {
+        Lang::addLines(['routes.about' => 'ueber'], 'de');
+        Lang::addLines(['routes.about' => 'about'], 'en');
+
+        Route::middleware(SetLocale::class)->group(function () {
+            Route::translate(function () {
+                Route::get(
+                    \NielsNumbers\LaravelLocalizer\Facades\Localizer::url('about'),
+                    fn () => Route::current()->baseName()
+                )->name('about');
+            });
+        });
+
+        $response = $this->get('/de/ueber');
+        $response->assertOk();
+        $response->assertSee('about');
+    }
+
+    public function test_base_name_returns_unchanged_for_foreign_routes()
+    {
+        Route::get('/admin/dashboard', fn () => Route::current()->baseName())
+            ->name('admin.dashboard');
+
+        $response = $this->get('/admin/dashboard');
+        $response->assertOk();
+        $response->assertSee('admin.dashboard');
+    }
+
+    public function test_base_name_returns_null_for_unnamed_routes()
+    {
+        Route::get('/unnamed', fn () => var_export(Route::current()->baseName(), true));
+
+        $response = $this->get('/unnamed');
+        $response->assertOk();
+        $response->assertSee('NULL');
+    }
+
+    public function test_current_base_name_returns_base_name_inside_request()
+    {
+        Route::middleware(SetLocale::class)->group(function () {
+            Route::localize(function () {
+                Route::get('/about', fn () => Route::currentBaseName())->name('about');
+            });
+        });
+
+        $response = $this->get('/de/about');
+        $response->assertOk();
+        $response->assertSee('about');
+    }
+
+    public function test_current_base_name_returns_null_outside_request_context()
+    {
+        $this->assertNull(Route::currentBaseName());
+    }
+
+    public function test_localizer_base_name_helper_strips_all_variants()
+    {
+        $localizer = \NielsNumbers\LaravelLocalizer\Facades\Localizer::getFacadeRoot();
+
+        $this->assertSame('about', $localizer->baseName('with_locale.about'));
+        $this->assertSame('about', $localizer->baseName('without_locale.about'));
+        $this->assertSame('about', $localizer->baseName('translated_de.about'));
+        $this->assertSame('admin.dashboard', $localizer->baseName('admin.dashboard'));
+        $this->assertNull($localizer->baseName(null));
+    }
 }

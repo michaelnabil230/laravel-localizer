@@ -5,7 +5,6 @@ namespace NielsNumbers\LaravelLocalizer\Services;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Str;
 use Illuminate\Support\Traits\Localizable;
 use LogicException;
 use NielsNumbers\LaravelLocalizer\Localizer;
@@ -47,7 +46,7 @@ class CurrentRouteLocalizer
         }
 
         $name = $current->getName();
-        $baseName = $this->stripLocalizerPrefix($name);
+        $baseName = $this->localizer->baseName($name);
 
         return $this->withLocale($locale, function () use ($current, $name, $baseName, $locale, $absolute, $forcePrefix) {
             if ($baseName !== '' && $baseName !== null) {
@@ -107,26 +106,6 @@ class CurrentRouteLocalizer
         }
 
         return route($baseName, $parameters, $absolute);
-    }
-
-    protected function stripLocalizerPrefix(?string $name): ?string
-    {
-        if ($name === null) {
-            return null;
-        }
-
-        foreach (['with_locale.', 'without_locale.'] as $prefix) {
-            if (Str::startsWith($name, $prefix)) {
-                return Str::after($name, $prefix);
-            }
-        }
-
-        if (Str::startsWith($name, 'translated_')) {
-            // translated_de.about → 'about' (strip up to and including first '.')
-            return Str::after($name, '.');
-        }
-
-        return $name;
     }
 
     protected function swapUriPrefix(Request $request, string $newLocale, bool $absolute, bool $forcePrefix = false): string

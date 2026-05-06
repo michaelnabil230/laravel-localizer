@@ -178,4 +178,36 @@ class Localizer
     {
         return 'localize';
     }
+
+    /**
+     * Strip the localizer prefix from a route name and return the bare base
+     * name. `with_locale.about` / `without_locale.about` /
+     * `translated_de.about` all collapse to `about`. Names that carry no
+     * localizer prefix (foreign-named routes like `admin.dashboard`) and
+     * `null` are returned unchanged, so the helper is safe to chain after
+     * `Route::current()?->getName()` without a null guard at the call site.
+     */
+    public function baseName(?string $name): ?string
+    {
+        if ($name === null) {
+            return null;
+        }
+
+        foreach (['with_locale.', 'without_locale.'] as $prefix) {
+            if (str_starts_with($name, $prefix)) {
+                return substr($name, strlen($prefix));
+            }
+        }
+
+        if (str_starts_with($name, 'translated_')) {
+            $dot = strpos($name, '.');
+
+            // No dot after `translated_`: not a name our TranslateMacro would
+            // produce (the macro always registers as `translated_{locale}.`).
+            // Treat it as a foreign name and return unchanged.
+            return $dot === false ? $name : substr($name, $dot + 1);
+        }
+
+        return $name;
+    }
 }

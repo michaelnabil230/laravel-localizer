@@ -127,6 +127,21 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
             return false;
         });
 
+        // Strip the localizer prefix from this Route's name. Lets calling
+        // code keep `$route->baseName() === 'about'` checks intact even
+        // though the macros register the route as `with_locale.about` /
+        // `translated_de.about` etc. — see docs/template-helpers.md.
+        \Illuminate\Routing\Route::macro('baseName', function (): ?string {
+            /** @var \Illuminate\Routing\Route $this */
+            return LocalizerFacade::baseName($this->getName());
+        });
+
+        // Convenience: `Route::current()?->baseName()` without the null
+        // dance. Returns null outside of a request, same as Route::current().
+        Route::macro('currentBaseName', function (): ?string {
+            return Route::current()?->baseName();
+        });
+
         // Is the current request handled by a localizer-managed route?
         Route::macro('isLocalized', function (): bool {
             $current = Route::current();

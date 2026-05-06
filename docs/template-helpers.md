@@ -1,7 +1,7 @@
 # Template Helpers
 
-Three additional macros are available on the `Route` facade for use in
-controllers, Blade templates, and middleware.
+Macros available on the `Route` facade (and one on the `Route` instance)
+for use in controllers, Blade templates, and middleware.
 
 ## `Route::localizedUrl($locale, $absolute = true)`
 
@@ -57,3 +57,33 @@ Useful for showing a switcher only on localized pages:
     @include('partials.language-switcher')
 @endif
 ```
+
+## `$route->baseName()` and `Route::currentBaseName()` {#base-name}
+
+Return the route's bare base name with the localizer prefix stripped.
+`with_locale.about`, `without_locale.about`, and `translated_de.about`
+all collapse to `about`. Foreign-named routes (e.g. `admin.dashboard`)
+and unnamed routes pass through unchanged.
+
+Use this whenever you compare against a known name - middleware,
+authorization gates, analytics, breadcrumb lookups - so the comparison
+keeps working across all locale variants:
+
+```php
+// In a custom middleware:
+if ($request->route()->baseName() === 'about') {
+    // ...
+}
+
+// Outside a Route instance, when you only care about the current request:
+if (Route::currentBaseName() === 'about') {
+    // ...
+}
+```
+
+`Route::currentBaseName()` returns `null` when called outside a request
+(no current route), so it's safe to use without a guard.
+
+The same logic is exposed as `Localizer::baseName($name)` if you need
+to strip an arbitrary route name (e.g. one read from logs or a queue
+payload).

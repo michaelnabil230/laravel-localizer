@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Facade;
  * @method static ?string detectLocale(\Illuminate\Http\Request $request)
  * @method static void setLocale(string $locale)
  * @method static string url(string $name, ?string $locale = null)
+ * @method static ?string baseName(?string $name)
  */
 class Localizer extends Facade
 {
