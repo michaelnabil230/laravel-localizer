@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-05-06
+
+### Added
+
+- `$route->baseName()` (macro on `Illuminate\Routing\Route`) and `Route::currentBaseName()` (facade shortcut for `Route::current()?->baseName()`): return a route's bare base name with the localizer prefix stripped (`with_locale.about` / `without_locale.about` / `translated_de.about` all collapse to `about`). Lets app code keep `$route->baseName() === 'about'` checks intact in middleware, gates, analytics and breadcrumb lookups even though the macros register the route under a prefixed name. Foreign-named routes (e.g. `admin.dashboard`) and unnamed routes pass through unchanged.
+- `Localizer::baseName(?string)`: same logic exposed as a public method on the facade for stripping arbitrary route names (e.g. read from logs or queue payloads).
+
+### Changed
+
+- `CurrentRouteLocalizer` now delegates prefix-stripping to `Localizer::baseName()` instead of carrying its own private `stripLocalizerPrefix()` helper.
+
+### Docs
+
+- New `Route::baseName()` / `Route::currentBaseName()` section in `docs/template-helpers.md` with middleware and current-request examples.
+- New caveat in `docs/caveats-and-recipes.md`: `$route->getName()` returns the prefixed variant — point readers at the new helpers.
+- Expanded the existing `Route::hasLocalized()` section to spell out *why* `Route::has()` returns `false` for localizer-managed names, so readers running into the same surprise as a recent issue report find the answer directly. Mirrored as a separate caveat entry that links into the helpers page.
+
 ## [1.1.1] - 2026-05-05
 
 ### Fixed
