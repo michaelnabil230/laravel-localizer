@@ -28,7 +28,7 @@ prefixed form. See [Language Switcher](/language-switcher).
 | Unnamed `Route::translate()` | Resolved through `route()`.|
 | Outside a request | Throws `LogicException`.               |
 
-## `Route::hasLocalized($name)`
+## `Route::hasLocalized($name)` {#has-localized}
 
 True if the name was registered through `Route::localize()` or
 `Route::translate()`:
@@ -39,8 +39,13 @@ True if the name was registered through `Route::localize()` or
 @endif
 ```
 
-Checks `with_locale.{name}`, `without_locale.{name}`, and
-`translated_{$locale}.{name}` for every supported locale.
+Use this instead of `Route::has('about')`. The macros never register
+the bare base name - they register `with_locale.about`,
+`without_locale.about`, and (for `Route::translate()`)
+`translated_{$locale}.about`. `Route::has('about')` therefore returns
+`false` even though `route('about')` resolves correctly through the
+package's URL generator. `Route::hasLocalized()` checks all variants
+for you.
 
 ## `Route::isLocalized()`
 

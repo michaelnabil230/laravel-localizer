@@ -3,6 +3,15 @@
 A grab bag of edge cases. Skim the headings; jump in when you hit the
 symptom.
 
+## `Route::has()` returns false for localizer routes
+
+`Route::localize()` and `Route::translate()` never register the bare
+base name - they register `with_locale.{name}`,
+`without_locale.{name}`, and `translated_{$locale}.{name}`. So
+`Route::has('about')` is `false` even when `route('about')` works.
+Use `Route::hasLocalized('about')` instead - it checks every variant.
+See [Template Helpers](/template-helpers#has-localized).
+
 ## Route names must be unique across both macros
 
 Each name once. Defining the same name through both `Route::localize()`
