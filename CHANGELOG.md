@@ -116,7 +116,8 @@ Initial public release. Architecture is stable; API may still see adjustments ba
 - Inertia + SPA language switcher guide (experimental) at `docs/inertia-spa-language-switch.md`.
 - CI matrix: PHP 8.2–8.4 × Laravel 9–12 (Testbench 7–10).
 
-[Unreleased]: https://github.com/niels-numbers/laravel-localizer/compare/v1.1.1...HEAD
+[Unreleased]: https://github.com/niels-numbers/laravel-localizer/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/niels-numbers/laravel-localizer/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/niels-numbers/laravel-localizer/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/niels-numbers/laravel-localizer/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/niels-numbers/laravel-localizer/compare/v1.0.0...v1.0.1
